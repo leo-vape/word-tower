@@ -2,59 +2,53 @@ let bestVoice: SpeechSynthesisVoice | null = null;
 let voicesLoaded = false;
 
 function loadBestVoice(): void {
-  const voices = window.speechSynthesis.getVoices();
-  if (voices.length === 0) return;
+  const allVoices = window.speechSynthesis.getVoices();
+  if (allVoices.length === 0) return;
 
   voicesLoaded = true;
+  window.speechSynthesis.removeEventListener('voiceschanged', loadBestVoice);
 
-  // Female voices first (clearer for learners), British preferred
+  const localVoices = allVoices.filter(v => v.localService);
+
   const preferred = [
-    'Serena',           // macOS en-GB ♀
-    'Samantha',         // macOS en-US ♀
-    'Google UK English Female',
-    'Google US English Female',
-    'Microsoft Zira',   // Windows en-US ♀
-    'Microsoft Hazel',  // Windows en-GB ♀
-    'Daniel',           // macOS en-GB ♂
-    'Alex',             // macOS en-US ♂
-    'Google UK English',
-    'Google US English',
-    'Microsoft David',
+    'Daniel', 'Serena', 'Samantha', 'Alex',
+    'Microsoft Hazel', 'Microsoft David', 'Microsoft Zira',
   ];
   for (const name of preferred) {
-    const match = voices.find(v => v.name === name);
+    const match = localVoices.find(v => v.name === name);
     if (match) { bestVoice = match; return; }
   }
 
-  // Fallback: any en-GB voice
-  const enGB = voices.find(v => v.lang === 'en-GB');
-  if (enGB) { bestVoice = enGB; return; }
-
-  // Fallback: any en-US voice
-  const enUS = voices.find(v => v.lang === 'en-US');
-  if (enUS) { bestVoice = enUS; return; }
-
-  // Last resort: any English voice
-  bestVoice = voices.find(v => v.lang.startsWith('en')) ?? null;
+  bestVoice = localVoices.find(v => v.lang === 'en-GB')
+    ?? localVoices.find(v => v.lang === 'en-US')
+    ?? localVoices.find(v => v.lang.startsWith('en'))
+    ?? null;
 }
 
 export function speakWord(word: string): void {
   if (typeof window === 'undefined' || !window.speechSynthesis) return;
-
-  window.speechSynthesis.cancel();
+  const synth = window.speechSynthesis;
 
   if (!voicesLoaded) {
     loadBestVoice();
     if (!voicesLoaded) {
-      window.speechSynthesis.addEventListener('voiceschanged', loadBestVoice, { once: true });
+      synth.addEventListener('voiceschanged', loadBestVoice, { once: true });
     }
   }
 
+  if (synth.speaking || synth.pending) return;
+
   const utterance = new SpeechSynthesisUtterance(word);
-  // Use the voice's native lang if available, otherwise fall back to en-GB
-  utterance.lang = bestVoice?.lang ?? 'en-GB';
+  if (bestVoice) {
+    utterance.voice = bestVoice;
+    utterance.lang = bestVoice.lang;
+  } else {
+    utterance.lang = 'en-US';
+  }
   utterance.rate = 0.9;
-  if (bestVoice) utterance.voice = bestVoice;
+  utterance.volume = 1;
   utterance.onerror = () => {};
-  window.speechSynthesis.speak(utterance);
+  utterance.onend = () => {};
+
+  synth.speak(utterance);
 }

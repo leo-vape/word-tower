@@ -16,6 +16,8 @@ export default function TowerStartScreen({ onStart, onShowHelp }: TowerStartScre
   const energyStones = useGameStore(s => s.energyStones);
   const activeCreatureIds = useGameStore(s => s.activeCreatureIds);
   const collection = useGameStore(s => s.collection);
+  const playerName = useGameStore(s => s.playerName);
+  const playerEmoji = useGameStore(s => s.playerEmoji);
 
   const activeCreatures = activeCreatureIds
     .map(id => getCreature(id))
@@ -38,6 +40,14 @@ export default function TowerStartScreen({ onStart, onShowHelp }: TowerStartScre
         )}
       </div>
       <p className="text-gray-400 text-sm mb-4">看中文，选英文，爬塔收集精灵！</p>
+
+      {/* Player identity */}
+      {playerName && (
+        <div className="flex items-center gap-2 mb-5 bg-surface rounded-full px-4 py-1.5 border border-gray-700">
+          <span className="text-lg">{playerEmoji}</span>
+          <span className="text-white text-sm font-medium">{playerName}</span>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-2 gap-3 w-full max-w-xs mb-5">

@@ -92,12 +92,15 @@ export default function TowerGame({ activeCreatures, onPlayAgain }: TowerGamePro
     };
   }, []);
 
-  // Override handleWordTap to track position and battle anim
+  // Override handleWordTap to track position, battle anim, and speak
   const onWordTap = useCallback((wordId: string) => {
-    // Store tap position from the card's position
     const wordView = view.fallingWords.find(w => w.id === wordId);
     if (wordView) {
       setLastTappedPos({ x: wordView.x, y: wordView.y });
+      // Call speakWord here (in user gesture context) for Chrome autoplay policy
+      if (wordView.isCorrect) {
+        speakWord(wordView.word);
+      }
     }
     handleWordTap(wordId);
   }, [view.fallingWords, handleWordTap]);
@@ -114,7 +117,6 @@ export default function TowerGame({ activeCreatures, onPlayAgain }: TowerGamePro
           setComboTrigger(c => c + 1);
           addScorePopup(40 + Math.random() * 40, 35 + Math.random() * 25, event.energy, event.combo);
           playCorrect();
-          speakWord(event.word);
           useGameStore.getState().recordWordResult(event.word, true);
           if (event.combo >= 3) playCombo(event.combo);
 
@@ -179,7 +181,6 @@ export default function TowerGame({ activeCreatures, onPlayAgain }: TowerGamePro
           setBattleAnim('celebrating');
           setTimeout(() => setBattleAnim('idle'), 700);
           setHitEffectTrigger(h => h + 1);
-          speakWord(event.word);
           setTimeout(() => { bossDefeatRef.current = false; }, 900);
           break;
         }

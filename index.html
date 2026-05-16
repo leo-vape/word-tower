@@ -12,7 +12,14 @@
     <title>单词爬塔 - Word Tower</title>
   </head>
   <body>
-    <div id="root"><div style="display:flex;align-items:center;justify-content:center;height:100dvh;background:#1a1a2e;color:#e0e0e0;font-family:sans-serif">加载中...</div></div>
+    <div id="root"><div id="loading-msg" style="display:flex;align-items:center;justify-content:center;height:100dvh;background:#1a1a2e;color:#e0e0e0;font-family:sans-serif">加载中...</div></div>
+    <script>
+      window.onerror = function(msg, src, line, col, err) {
+        var el = document.getElementById('loading-msg');
+        if (el) el.textContent = 'JS错误: ' + msg + ' (行' + line + ')';
+        return false;
+      };
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

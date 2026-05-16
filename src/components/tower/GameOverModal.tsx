@@ -1,6 +1,9 @@
+import { useMemo, useCallback } from 'react';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import { useGameStore } from '../../store/useGameStore';
+import { showToast } from '../ui/Toast';
+import { wordBank } from '../../data/wordBank';
 
 interface GameOverModalProps {
   height: number;
@@ -26,11 +29,83 @@ export default function GameOverModal({
   const seconds = Math.floor(elapsedMs / 1000);
   const minutes = Math.floor(seconds / 60);
   const secs = seconds % 60;
-  const weakWords = useGameStore(s => s.getWeakWords(5));
+  const wordStats = useGameStore(s => s.wordStats);
+  const playerName = useGameStore(s => s.playerName);
+  const playerEmoji = useGameStore(s => s.playerEmoji);
+  const bestHeight = useGameStore(s => s.bestHeight);
+
+  const weakWords = useMemo(() => {
+    return Object.entries(wordStats)
+      .filter(([, s]) => s.mastery < 4)
+      .sort((a, b) => b[1].wrong - a[1].wrong || a[1].mastery - b[1].mastery)
+      .slice(0, 5)
+      .map(([word, s]) => {
+        const entry = wordBank.find(w => w.en === word);
+        return { word, zh: entry?.zh ?? '', wrong: s.wrong, mastery: s.mastery };
+      });
+  }, [wordStats]);
+
+  const shareText = `${playerEmoji} ${playerName || '单词法师'}\n🗼 爬塔 ${height} 层 | 最佳 ${bestHeight} 层\n⚡ 能量石 +${energy}\n📝 拼对 ${wordsCompleted} 词\n🔥 最大连击 x${maxCombo}\n⏱ ${minutes}:${secs.toString().padStart(2, '0')}\n\n🧙 单词爬塔 — 和朋友一起挑战吧！`;
+
+  const handleShare = useCallback(async () => {
+    // Tier 1: Web Share API (mobile native share sheet)
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: '单词爬塔 · 战绩分享',
+          text: shareText,
+        });
+        return;
+      } catch {
+        // user cancelled — don't fallback, just stop
+        return;
+      }
+    }
+
+    // Tier 2: navigator.clipboard (modern browsers)
+    try {
+      await navigator.clipboard.writeText(shareText);
+      showToast('📋 战绩已复制，去朋友圈粘贴吧！');
+      return;
+    } catch {
+      // clipboard API failed, try fallback
+    }
+
+    // Tier 3: execCommand fallback (legacy browsers, WeChat webview)
+    try {
+      const textarea = document.createElement('textarea');
+      textarea.value = shareText;
+      textarea.style.position = 'fixed';
+      textarea.style.left = '-9999px';
+      textarea.style.top = '-9999px';
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      const ok = document.execCommand('copy');
+      document.body.removeChild(textarea);
+      if (ok) {
+        showToast('📋 战绩已复制，去朋友圈粘贴吧！');
+        return;
+      }
+    } catch {
+      // execCommand also failed
+    }
+
+    // Tier 4: all failed — show text for manual copy
+    showToast('请截图保存战绩，或长按文字手动复制');
+  }, [shareText]);
+
+  const isNewBest = height > 0 && height >= bestHeight;
 
   return (
     <Modal open onClose={onPlayAgain} title="爬塔结束！">
       <div className="space-y-4">
+        {/* Player identity */}
+        <div className="flex items-center justify-center gap-2">
+          <span className="text-2xl">{playerEmoji || '🧙'}</span>
+          <span className="text-white font-bold">{playerName || '单词法师'}</span>
+        </div>
+
         {/* Last word */}
         {lastChinese && (
           <div className="text-center py-2 bg-bg rounded-xl">
@@ -40,29 +115,37 @@ export default function GameOverModal({
           </div>
         )}
 
-        {/* Tower height - main stat */}
-        <div className="text-center py-4">
-          <div className="text-5xl font-bold text-accent">{height}</div>
-          <div className="text-sm text-gray-400 mt-1">层</div>
-        </div>
+        {/* Share card — main stat highlight */}
+        <div className="bg-gradient-to-b from-[#1a1040] to-[#0f0f23] rounded-2xl p-5 border border-purple-800/40 text-center relative overflow-hidden">
+          {/* Decorative corner accents */}
+          <div className="absolute top-0 left-0 w-12 h-12 border-t-2 border-l-2 border-accent/30 rounded-tl-2xl" />
+          <div className="absolute top-0 right-0 w-12 h-12 border-t-2 border-r-2 border-accent/30 rounded-tr-2xl" />
+          <div className="absolute bottom-0 left-0 w-12 h-12 border-b-2 border-l-2 border-accent/30 rounded-bl-2xl" />
+          <div className="absolute bottom-0 right-0 w-12 h-12 border-b-2 border-r-2 border-accent/30 rounded-br-2xl" />
 
-        {/* Stats grid */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-bg rounded-xl p-3 text-center">
-            <div className="text-lg font-bold text-energy">{energy}</div>
-            <div className="text-xs text-gray-500">能量石</div>
-          </div>
-          <div className="bg-bg rounded-xl p-3 text-center">
-            <div className="text-lg font-bold text-primary">{wordsCompleted}</div>
-            <div className="text-xs text-gray-500">拼对词数</div>
-          </div>
-          <div className="bg-bg rounded-xl p-3 text-center">
-            <div className="text-lg font-bold text-yellow-400">x{maxCombo}</div>
-            <div className="text-xs text-gray-500">最大连击</div>
-          </div>
-          <div className="bg-bg rounded-xl p-3 text-center">
-            <div className="text-lg font-bold text-gray-300">{minutes}:{secs.toString().padStart(2, '0')}</div>
-            <div className="text-xs text-gray-500">持续时间</div>
+          {isNewBest && (
+            <div className="text-xs text-yellow-400 mb-2 animate-pulse">🏆 新纪录！</div>
+          )}
+          <div className="text-5xl font-bold text-accent drop-shadow-[0_0_12px_rgba(255,107,107,0.4)]">{height}</div>
+          <div className="text-sm text-gray-400 mt-1">层</div>
+
+          <div className="grid grid-cols-2 gap-3 mt-4">
+            <div className="bg-bg/60 rounded-xl p-3 text-center">
+              <div className="text-lg font-bold text-energy">{energy}</div>
+              <div className="text-xs text-gray-500">能量石</div>
+            </div>
+            <div className="bg-bg/60 rounded-xl p-3 text-center">
+              <div className="text-lg font-bold text-primary">{wordsCompleted}</div>
+              <div className="text-xs text-gray-500">拼对词数</div>
+            </div>
+            <div className="bg-bg/60 rounded-xl p-3 text-center">
+              <div className="text-lg font-bold text-yellow-400">x{maxCombo}</div>
+              <div className="text-xs text-gray-500">最大连击</div>
+            </div>
+            <div className="bg-bg/60 rounded-xl p-3 text-center">
+              <div className="text-lg font-bold text-gray-300">{minutes}:{secs.toString().padStart(2, '0')}</div>
+              <div className="text-xs text-gray-500">持续时间</div>
+            </div>
           </div>
         </div>
 
@@ -80,7 +163,7 @@ export default function GameOverModal({
                   <span className="text-gray-600">
                     错{w.wrong}次
                     <span className={`ml-1 ${w.mastery <= 1 ? 'text-red-400' : w.mastery <= 2 ? 'text-yellow-400' : 'text-green-400'}`}>
-                      {'⬤'.repeat(Math.max(1, w.mastery))}{'⬤'.repeat(5 - Math.max(1, w.mastery)).replace(/⬤/g, '〇')}
+                      {'⬤'.repeat(Math.max(1, w.mastery))}{'〇'.repeat(5 - Math.max(1, w.mastery))}
                     </span>
                   </span>
                 </div>
@@ -89,9 +172,14 @@ export default function GameOverModal({
           </div>
         )}
 
-        <Button variant="primary" size="lg" onClick={onPlayAgain} className="w-full">
-          再来一局
-        </Button>
+        <div className="flex gap-3">
+          <Button variant="secondary" size="lg" onClick={handleShare} className="flex-1">
+            📤 分享战绩
+          </Button>
+          <Button variant="primary" size="lg" onClick={onPlayAgain} className="flex-1">
+            再来一局
+          </Button>
+        </div>
       </div>
     </Modal>
   );

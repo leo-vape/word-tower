@@ -12,6 +12,8 @@ export interface WordStat {
 
 export interface PersistedGameState {
   version: number;
+  playerName: string;
+  playerEmoji: string;
   energyStones: number;
   totalWordsCompleted: number;
   bestHeight: number;

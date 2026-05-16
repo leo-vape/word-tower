@@ -26,12 +26,15 @@ interface GameStore extends PersistedGameState {
   getShareData: () => { towerHeight: number; totalWordsCompleted: number; totalCreaturesCollected: number; rarestCreature: Creature | null; energyStones: number; date: string };
   recordWordResult: (word: string, correct: boolean) => void;
   getWeakWords: (limit?: number) => Array<{ word: string; zh: string; wrong: number; mastery: number }>;
+  setPlayerProfile: (name: string, emoji: string) => void;
 }
 
 export const useGameStore = create<GameStore>()(
   persist(
     (set, get) => ({
       version: 1,
+      playerName: '',
+      playerEmoji: '🧙',
       energyStones: INITIAL_ENERGY,
       totalWordsCompleted: 0,
       bestHeight: 0,
@@ -44,6 +47,8 @@ export const useGameStore = create<GameStore>()(
       activeCreatureIds: [],
       settings: { soundEnabled: true, hapticEnabled: true },
       wordStats: {},
+
+      setPlayerProfile: (name, emoji) => set({ playerName: name, playerEmoji: emoji }),
 
       addEnergy: (amount) => set(s => ({ energyStones: s.energyStones + amount })),
 

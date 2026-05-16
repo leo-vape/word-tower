@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import type { Creature } from '../../types/creature';
 
 interface BattleLineProps {
@@ -6,7 +7,7 @@ interface BattleLineProps {
   combo: number;
 }
 
-export default function BattleLine({ creatures, animState, combo }: BattleLineProps) {
+export default memo(function BattleLine({ creatures, animState, combo }: BattleLineProps) {
   if (creatures.length === 0) return null;
 
   const animClass = (() => {
@@ -43,4 +44,4 @@ export default function BattleLine({ creatures, animState, combo }: BattleLinePr
       ))}
     </div>
   );
-}
+});

@@ -1,18 +1,16 @@
+import { memo } from 'react';
 import type { FallingWordView } from '../../types/tower';
 
 interface FallingWordCardProps {
   word: FallingWordView;
   feedback: 'correct' | 'wrong' | 'boss_defeated' | null;
   isCorrectWord: boolean;
-  onTap: () => void;
+  onWordTap: (id: string) => void;
 }
 
-export default function FallingWordCard({ word, feedback, isCorrectWord, onTap }: FallingWordCardProps) {
+export default memo(function FallingWordCard({ word, feedback, isCorrectWord, onWordTap }: FallingWordCardProps) {
   const wordLen = word.word.length;
   const width = Math.min(Math.max(wordLen * 16 + 24, 72), 180);
-
-  // Threat level: words near bottom glow more menacingly
-  const threatLevel = Math.min(word.y / 70, 1);
 
   let borderColor = 'border-purple-800/60';
   let bgColor = 'bg-purple-950/30';
@@ -46,32 +44,29 @@ export default function FallingWordCard({ word, feedback, isCorrectWord, onTap }
     }
   }
 
-  // Dark enemy glow based on how close to bottom
-  const enemyGlow = !feedback
-    ? `0 0 ${4 + threatLevel * 16}px rgba(147,51,234,${0.2 + threatLevel * 0.4})`
-    : '';
+  // Enemy glow — use CSS animation instead of per-frame JS computation
+  const enemyGlow = !feedback ? 'animate-enemy-glow' : '';
 
   return (
     <div
       className={`absolute flex items-center justify-center rounded-lg font-bold text-sm
         border transition-all duration-200 active:scale-95 cursor-pointer select-none
-        ${borderColor} ${bgColor} ${textColor} ${extraClass}
-        ${!feedback ? 'animate-enemy-glow' : ''}`}
+        ${borderColor} ${bgColor} ${textColor} ${extraClass} ${enemyGlow}`}
       style={{
         width,
         height: 40,
         left: `${word.x}%`,
         top: `${word.y}%`,
-        transform: `translateX(-50%) translateX(${Math.sin(word.y * 0.2) * 4}px)`,
-        boxShadow: shadowStyle || enemyGlow || undefined,
+        transform: `translateX(-50%)`,
+        boxShadow: shadowStyle || undefined,
         zIndex: 1,
       }}
       onPointerDown={(e) => {
         e.preventDefault();
-        onTap();
+        onWordTap(word.id);
       }}
     >
       {word.word}
     </div>
   );
-}
+});

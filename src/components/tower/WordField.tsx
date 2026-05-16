@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import type { FallingWordView } from '../../types/tower';
 import type { Creature } from '../../types/creature';
 import FallingWordCard from './FallingWordCard';
@@ -25,7 +26,7 @@ interface WordFieldProps {
   lastTappedPos?: { x: number; y: number };
 }
 
-export default function WordField({
+export default memo(function WordField({
   words, feedback, correctWordId, onWordTap, fieldRef,
   chinese, letterCount, roundTrigger, phonetic,
   creatures, battleAnim, combo,
@@ -44,7 +45,6 @@ export default function WordField({
       className="absolute inset-0 overflow-hidden"
       style={{ touchAction: 'manipulation' }}
     >
-      {/* Chinese prompt — top center */}
       <div className="absolute top-0 left-0 right-0 z-10 pointer-events-none">
         <ChinesePrompt
           chinese={chinese}
@@ -56,18 +56,16 @@ export default function WordField({
         />
       </div>
 
-      {/* Falling words */}
       {words.map(word => (
         <FallingWordCard
           key={word.id}
           word={word}
           feedback={feedback}
           isCorrectWord={word.id === correctWordId || word.isCorrect}
-          onTap={() => onWordTap(word.id)}
+          onWordTap={onWordTap}
         />
       ))}
 
-      {/* Hit effect at tap position */}
       {feedback && lastTappedPos && (
         <HitEffect
           x={lastTappedPos.x}
@@ -77,14 +75,12 @@ export default function WordField({
         />
       )}
 
-      {/* Creature dialogue */}
       <CreatureDialogue
         creatures={creatures}
         trigger={dialogueTrigger}
         context={dialogueContext}
       />
 
-      {/* Battle line — creatures at bottom */}
       <BattleLine
         creatures={creatures}
         animState={battleAnim}
@@ -92,4 +88,4 @@ export default function WordField({
       />
     </div>
   );
-}
+});

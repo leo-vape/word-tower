@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 
 interface ChinesePromptProps {
   chinese: string;
@@ -9,7 +9,7 @@ interface ChinesePromptProps {
   phonetic?: string;
 }
 
-export default function ChinesePrompt({ chinese, letterCount, feedback, correctWord, trigger, phonetic }: ChinesePromptProps) {
+export default memo(function ChinesePrompt({ chinese, letterCount, feedback, correctWord, trigger, phonetic }: ChinesePromptProps) {
   const [animClass, setAnimClass] = useState('');
 
   useEffect(() => {
@@ -53,4 +53,4 @@ export default function ChinesePrompt({ chinese, letterCount, feedback, correctW
       )}
     </div>
   );
-}
+});

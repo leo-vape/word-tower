@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#1a1a2e" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="单词爬塔" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+    <title>单词爬塔 - Word Tower</title>
+    <script type="module" crossorigin src="/assets/index-P6uJgVW9.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-DaXuikTR.css">
+  </head>
+  <body>
+    <div id="root"><div id="loading-msg" style="display:flex;align-items:center;justify-content:center;height:100dvh;background:#1a1a2e;color:#e0e0e0;font-family:sans-serif">加载中...</div></div>
+    <script>
+      window.onerror = function(msg, src, line, col, err) {
+        var el = document.getElementById('loading-msg');
+        if (el) el.textContent = 'JS错误: ' + msg + ' (行' + line + ')';
+        return false;
+      };
+    </script>
+  </body>
+</html>

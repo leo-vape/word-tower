@@ -1,5 +1,6 @@
-export const APP_VERSION = '1.1.0';
+export const APP_VERSION = '1.2.0';
 export const INITIAL_ENERGY = 20;
+export const STORY_SEEN_KEY = 'word_tower_story_seen';
 export const STARTING_LIVES = 5;
 export const MAX_ACTIVE_CREATURES = 3;
 export const MAX_SELECTED_LETTERS = 8;

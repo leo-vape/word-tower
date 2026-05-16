@@ -1,26 +1,41 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useGameStore } from '../../store/useGameStore';
 import { getCreature } from '../../data/creatures';
+import { STORY_SEEN_KEY } from '../../utils/constants';
 import TowerStartScreen from './TowerStartScreen';
 import TowerGame from './TowerGame';
 import OnboardingOverlay from './OnboardingOverlay';
+import StoryIntro from './StoryIntro';
 
 const ONBOARDING_KEY = 'word_tower_onboarded';
 
 export default function TowerScreen() {
   const [playing, setPlaying] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showStory, setShowStory] = useState(false);
   const activeCreatureIds = useGameStore(s => s.activeCreatureIds);
 
   useEffect(() => {
-    const onboarded = localStorage.getItem(ONBOARDING_KEY);
-    if (!onboarded) {
+    // Show story first, then onboarding
+    if (!localStorage.getItem(STORY_SEEN_KEY)) {
+      setShowStory(true);
+      return;
+    }
+    if (!localStorage.getItem(ONBOARDING_KEY)) {
+      setShowOnboarding(true);
+    }
+  }, []);
+
+  const handleStoryComplete = useCallback(() => {
+    localStorage.setItem(STORY_SEEN_KEY, '1');
+    setShowStory(false);
+    // Show onboarding after story if not seen
+    if (!localStorage.getItem(ONBOARDING_KEY)) {
       setShowOnboarding(true);
     }
   }, []);
 
   const dismissOnboarding = () => {
-    // Only persist dismissal if it was auto-shown (first visit)
     if (!localStorage.getItem(ONBOARDING_KEY)) {
       localStorage.setItem(ONBOARDING_KEY, '1');
     }
@@ -30,6 +45,10 @@ export default function TowerScreen() {
   const activeCreatures = activeCreatureIds
     .map(id => getCreature(id))
     .filter(c => c != null);
+
+  if (showStory) {
+    return <StoryIntro onComplete={handleStoryComplete} />;
+  }
 
   if (playing) {
     return (

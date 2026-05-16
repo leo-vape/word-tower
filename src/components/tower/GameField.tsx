@@ -11,9 +11,9 @@ interface GameFieldProps {
 export default function GameField({ children, combo, shake, scorePopups }: GameFieldProps) {
   return (
     <div
-      className={`relative flex-1 min-h-[200px] bg-bg/50 overflow-hidden transition-all duration-300
-        ${combo >= 5 ? 'shadow-[inset_0_0_40px_rgba(233,69,96,0.15)]' : ''}
-        ${combo >= 8 ? 'shadow-[inset_0_0_60px_rgba(255,215,0,0.2)]' : ''}
+      className={`relative flex-1 min-h-[200px] bg-gradient-to-b from-[#0f0f23] via-[#1a1030] to-[#0f0f23] overflow-hidden transition-all duration-300
+        ${combo >= 5 ? 'shadow-[inset_0_0_60px_rgba(233,69,96,0.12)]' : ''}
+        ${combo >= 8 ? 'shadow-[inset_0_0_80px_rgba(255,215,0,0.15)]' : ''}
         ${shake ? 'animate-shake' : ''}
       `}
     >
@@ -23,23 +23,26 @@ export default function GameField({ children, combo, shake, scorePopups }: GameF
           className="absolute inset-0 pointer-events-none z-10 rounded-xl transition-opacity duration-300"
           style={{
             boxShadow: combo >= 7
-              ? 'inset 0 0 30px rgba(255,215,0,0.4), 0 0 20px rgba(255,215,0,0.3)'
-              : 'inset 0 0 20px rgba(233,69,96,0.3), 0 0 12px rgba(233,69,96,0.2)',
+              ? 'inset 0 0 40px rgba(255,215,0,0.3), 0 0 25px rgba(255,215,0,0.2)'
+              : 'inset 0 0 25px rgba(233,69,96,0.25), 0 0 15px rgba(233,69,96,0.15)',
           }}
         />
       )}
 
-      {/* Background particles */}
+      {/* Battle field particles — embers */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        {Array.from({ length: 6 }).map((_, i) => (
+        {Array.from({ length: 10 }).map((_, i) => (
           <div
             key={i}
-            className="absolute w-1 h-1 bg-cyan-400/20 rounded-full"
+            className="absolute rounded-full"
             style={{
-              left: `${(i * 17 + 7) % 100}%`,
-              top: `${(i * 13 + 3) % 100}%`,
-              animation: `float-up ${2 + i * 0.5}s ease-in-out infinite`,
-              animationDelay: `${i * 0.7}s`,
+              width: `${2 + Math.random() * 3}px`,
+              height: `${2 + Math.random() * 3}px`,
+              left: `${(i * 11 + 5) % 100}%`,
+              top: `${(i * 9 + 2) % 100}%`,
+              backgroundColor: i % 3 === 0 ? 'rgba(233,69,96,0.2)' : i % 3 === 1 ? 'rgba(245,197,24,0.15)' : 'rgba(147,51,234,0.2)',
+              animation: `float-up ${2.5 + i * 0.6}s ease-in-out infinite`,
+              animationDelay: `${i * 0.8}s`,
             }}
           />
         ))}

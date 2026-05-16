@@ -2,8 +2,8 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import type { Creature } from '../../types/creature';
 import { useGameLoop } from '../../hooks/useGameLoop';
 import { useGameStore } from '../../store/useGameStore';
+import { useGameSound } from '../../hooks/useGameSound';
 import { showToast } from '../ui/Toast';
-import { speakWord } from '../../utils/speech';
 import WordField from './WordField';
 import GameHUD from './GameHUD';
 import GameField from './GameField';
@@ -41,6 +41,8 @@ export default function TowerGame({ activeCreatures, onPlayAgain }: TowerGamePro
     clearEvents,
   } = useGameLoop(activeCreatures);
 
+  const { playCorrect, playWrong, playCombo, playBossDefeat, playBossStart } = useGameSound();
+
   const [comboTrigger, setComboTrigger] = useState(0);
   const [showGameOver, setShowGameOver] = useState(false);
   const [scorePopups, setScorePopups] = useState<ScorePopupData[]>([]);
@@ -49,10 +51,22 @@ export default function TowerGame({ activeCreatures, onPlayAgain }: TowerGamePro
   const [bossChinese, setBossChinese] = useState('');
   const bossDefeatRef = useRef(false);
 
+  // Battle animation state
+  const [battleAnim, setBattleAnim] = useState<'idle' | 'attacking' | 'hit' | 'celebrating' | 'boss_alert'>('idle');
+
+  // Dialogue state
+  const [dialogueTrigger, setDialogueTrigger] = useState(0);
+  const [dialogueContext, setDialogueContext] = useState<'normal' | 'combo' | 'wrong' | 'boss'>('normal');
+
+  // Hit effect state
+  const [hitEffectTrigger, setHitEffectTrigger] = useState(0);
+  const [lastTappedPos, setLastTappedPos] = useState<{ x: number; y: number }>({ x: 50, y: 50 });
+
   const startRef = useRef(handleStart);
   const stopRef = useRef(handleStop);
   const lastWordRef = useRef<{ zh: string; en: string }>({ zh: '', en: '' });
   const popupIdRef = useRef(0);
+  const wordCountRef = useRef(0);
   startRef.current = handleStart;
   stopRef.current = handleStop;
 
@@ -77,6 +91,16 @@ export default function TowerGame({ activeCreatures, onPlayAgain }: TowerGamePro
     };
   }, []);
 
+  // Override handleWordTap to track position and battle anim
+  const onWordTap = useCallback((wordId: string) => {
+    // Store tap position from the card's position
+    const wordView = view.fallingWords.find(w => w.id === wordId);
+    if (wordView) {
+      setLastTappedPos({ x: wordView.x, y: wordView.y });
+    }
+    handleWordTap(wordId);
+  }, [view.fallingWords, handleWordTap]);
+
   // Process events
   useEffect(() => {
     if (events.length === 0) return;
@@ -87,21 +111,51 @@ export default function TowerGame({ activeCreatures, onPlayAgain }: TowerGamePro
           completeWord(event.word, event.combo);
           addEnergy(event.energy);
           setComboTrigger(c => c + 1);
-          addScorePopup(30 + Math.random() * 40, 30 + Math.random() * 30, event.energy, event.combo);
-          speakWord(event.word);
+          addScorePopup(40 + Math.random() * 40, 35 + Math.random() * 25, event.energy, event.combo);
+          playCorrect();
+          if (event.combo >= 3) playCombo(event.combo);
+
+          // Battle anim + dialogue
+          setBattleAnim('attacking');
+          setTimeout(() => setBattleAnim('idle'), 350);
+          setHitEffectTrigger(h => h + 1);
+
+          wordCountRef.current++;
+          if (wordCountRef.current % 6 === 0) {
+            setDialogueContext('normal');
+            setDialogueTrigger(t => t + 1);
+          }
+          if (event.combo === 5) {
+            setDialogueContext('combo');
+            setDialogueTrigger(t => t + 1);
+          }
           break;
         }
         case 'word_wrong': {
           setShake(true);
           setTimeout(() => setShake(false), 500);
+          playWrong();
+
+          setBattleAnim('hit');
+          setTimeout(() => setBattleAnim('idle'), 450);
+          setHitEffectTrigger(h => h + 1);
+
+          setDialogueContext('wrong');
+          setDialogueTrigger(t => t + 1);
           break;
         }
         case 'word_missed':
+          playWrong();
           break;
         case 'boss_start': {
           setBossActive(true);
           setBossChinese(event.chinese);
-          showToast('⚠️ BOSS 来了！');
+          showToast('👹 BOSS 来了！全力迎战！');
+          playBossStart();
+
+          setBattleAnim('boss_alert');
+          setDialogueContext('boss');
+          setDialogueTrigger(t => t + 1);
           break;
         }
         case 'boss_defeated': {
@@ -113,9 +167,13 @@ export default function TowerGame({ activeCreatures, onPlayAgain }: TowerGamePro
           const rarityNames: Record<string, string> = {
             rare: '稀有🥚', epic: '史诗🥚', legendary: '传说🥚'
           };
-          showToast(`BOSS 击败！获得${rarityNames[event.eggRarity]}！`);
+          showToast(`💥 BOSS 击败！获得${rarityNames[event.eggRarity]}！`);
           addScorePopup(50, 40, event.energy, 99);
-          speakWord(event.word);
+          playBossDefeat();
+
+          setBattleAnim('celebrating');
+          setTimeout(() => setBattleAnim('idle'), 700);
+          setHitEffectTrigger(h => h + 1);
           setTimeout(() => { bossDefeatRef.current = false; }, 900);
           break;
         }
@@ -136,11 +194,11 @@ export default function TowerGame({ activeCreatures, onPlayAgain }: TowerGamePro
           const rarityNames: Record<string, string> = {
             rare: '稀有🥚', epic: '史诗🥚', legendary: '传说🥚'
           };
-          showToast(`获得${rarityNames[event.rarity]}！`);
+          showToast(`🥚 获得${rarityNames[event.rarity]}！`);
           break;
         }
         case 'difficulty_up':
-          showToast(`难度提升至 Lv.${event.level}`);
+          showToast(`⚡ 难度提升至 Lv.${event.level}`);
           break;
       }
     }
@@ -173,12 +231,19 @@ export default function TowerGame({ activeCreatures, onPlayAgain }: TowerGamePro
           words={view.fallingWords}
           feedback={view.feedback}
           correctWordId={view.correctWordId}
-          onWordTap={handleWordTap}
+          onWordTap={onWordTap}
           fieldRef={fieldRef}
           chinese={view.targetChinese}
           letterCount={view.targetLetterCount}
           roundTrigger={view.roundTrigger}
           phonetic={view.targetPhonetic}
+          creatures={activeCreatures}
+          battleAnim={battleAnim}
+          combo={view.combo}
+          dialogueTrigger={dialogueTrigger}
+          dialogueContext={dialogueContext}
+          hitEffectTrigger={hitEffectTrigger}
+          lastTappedPos={lastTappedPos}
         />
         <TowerDisplay height={view.currentHeight} />
         <BossOverlay

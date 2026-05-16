@@ -40,13 +40,22 @@ export default function GameHUD({ height, energy, combo, lives, level, elapsedMs
   const maxLives = STARTING_LIVES + 2;
   const buffs = getBuffSummary(activeCreatures);
 
+  // Fire color for combo
+  let comboColor = 'text-primary';
+  if (combo >= 10) comboColor = 'text-yellow-300 animate-fire-pulse';
+  else if (combo >= 7) comboColor = 'text-accent';
+  else if (combo >= 5) comboColor = 'text-orange-400';
+  else if (combo >= 3) comboColor = 'text-red-400';
+
   return (
     <div className="flex flex-col bg-surface/90 backdrop-blur border-b border-gray-800">
       {/* Main HUD row */}
       <div className="flex items-center justify-between px-3 py-1.5">
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1 bg-bg rounded-lg px-2 py-0.5">
-            <span className="text-accent font-bold text-sm">{height}</span>
+            <span className="text-accent font-bold text-sm drop-shadow-[0_0_4px_rgba(245,197,24,0.5)]">
+              {height}
+            </span>
             <span className="text-gray-500 text-xs">层</span>
           </div>
           <div className="flex items-center gap-1 bg-bg rounded-lg px-2 py-0.5">
@@ -57,16 +66,17 @@ export default function GameHUD({ height, energy, combo, lives, level, elapsedMs
 
         <div className="flex items-center gap-2">
           {combo > 1 && (
-            <span className={`text-xs font-bold animate-bounce-in rounded-full px-2 py-0.5
-              ${combo >= 7 ? 'bg-accent/30 text-accent' : 'bg-primary/20 text-primary'}`}>
-              x{combo}
+            <span className={`text-xs font-bold animate-bounce-in rounded-full px-2 py-0.5 bg-bg ${comboColor}`}>
+              🔥 x{combo}
             </span>
           )}
           <div className="flex gap-0.5">
             {Array.from({ length: maxLives }).map((_, i) => (
               <span key={i} className={`text-xs transition-all duration-300 ${
-                i < lives ? 'scale-100 opacity-100' : 'scale-0 opacity-0'
-              }`}>❤️</span>
+                i < lives ? '' : 'grayscale opacity-20'
+              }`}>
+                {i < lives ? '❤️' : '🖤'}
+              </span>
             ))}
           </div>
           <span className="text-xs text-gray-500 bg-bg rounded px-1.5 py-0.5">Lv.{level}</span>

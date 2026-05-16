@@ -1,6 +1,10 @@
 import type { FallingWordView } from '../../types/tower';
+import type { Creature } from '../../types/creature';
 import FallingWordCard from './FallingWordCard';
 import ChinesePrompt from './ChinesePrompt';
+import BattleLine from './BattleLine';
+import CreatureDialogue from './CreatureDialogue';
+import HitEffect from './HitEffect';
 
 interface WordFieldProps {
   words: FallingWordView[];
@@ -12,23 +16,35 @@ interface WordFieldProps {
   letterCount: number;
   roundTrigger: number;
   phonetic: string;
+  creatures: Creature[];
+  battleAnim: 'idle' | 'attacking' | 'hit' | 'celebrating' | 'boss_alert';
+  combo: number;
+  dialogueTrigger: number;
+  dialogueContext: 'normal' | 'combo' | 'wrong' | 'boss';
+  hitEffectTrigger: number;
+  lastTappedPos?: { x: number; y: number };
 }
 
 export default function WordField({
   words, feedback, correctWordId, onWordTap, fieldRef,
   chinese, letterCount, roundTrigger, phonetic,
+  creatures, battleAnim, combo,
+  dialogueTrigger, dialogueContext,
+  hitEffectTrigger, lastTappedPos,
 }: WordFieldProps) {
   const correctWord = feedback === 'wrong'
     ? words.find(w => w.isCorrect)?.word
     : undefined;
 
+  const feedbackType = feedback === 'boss_defeated' ? 'correct' : feedback || undefined;
+
   return (
     <div
       ref={fieldRef}
-      className="absolute inset-0 overflow-hidden rounded-xl mx-1"
+      className="absolute inset-0 overflow-hidden"
       style={{ touchAction: 'manipulation' }}
     >
-      {/* Chinese prompt — overlay at top, compact */}
+      {/* Chinese prompt — top center */}
       <div className="absolute top-0 left-0 right-0 z-10 pointer-events-none">
         <ChinesePrompt
           chinese={chinese}
@@ -40,20 +56,6 @@ export default function WordField({
         />
       </div>
 
-      {/* Column guides */}
-      <div className="absolute inset-0 flex pointer-events-none">
-        <div className="flex-1 border-r border-gray-700/20" />
-        <div className="flex-1 border-r border-gray-700/20" />
-        <div className="flex-1" />
-      </div>
-
-      {/* Empty hint */}
-      {words.length === 0 && (
-        <div className="absolute inset-0 flex items-center justify-center text-gray-600 text-sm pointer-events-none">
-          准备中...
-        </div>
-      )}
-
       {/* Falling words */}
       {words.map(word => (
         <FallingWordCard
@@ -64,6 +66,30 @@ export default function WordField({
           onTap={() => onWordTap(word.id)}
         />
       ))}
+
+      {/* Hit effect at tap position */}
+      {feedback && lastTappedPos && (
+        <HitEffect
+          x={lastTappedPos.x}
+          y={lastTappedPos.y}
+          type={feedbackType === 'correct' ? 'correct' : 'wrong'}
+          trigger={hitEffectTrigger}
+        />
+      )}
+
+      {/* Creature dialogue */}
+      <CreatureDialogue
+        creatures={creatures}
+        trigger={dialogueTrigger}
+        context={dialogueContext}
+      />
+
+      {/* Battle line — creatures at bottom */}
+      <BattleLine
+        creatures={creatures}
+        animState={battleAnim}
+        combo={combo}
+      />
     </div>
   );
 }

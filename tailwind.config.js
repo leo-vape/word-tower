@@ -29,6 +29,17 @@ export default {
         'float-up': 'float-up 1s ease-out forwards',
         'bounce-in': 'bounce-in 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)',
         'scale-in': 'scale-in 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55)',
+        // Battle theme animations
+        'enemy-glow': 'enemy-glow 2s ease-in-out infinite',
+        'card-shatter': 'card-shatter 0.5s ease-out forwards',
+        'creature-idle': 'creature-idle 1.5s ease-in-out infinite',
+        'creature-lunge': 'creature-lunge 0.3s ease-out',
+        'creature-hit': 'creature-hit 0.4s ease-in-out',
+        'creature-celebrate': 'creature-celebrate 0.6s ease-out',
+        'flag-wave': 'flag-wave 2s ease-in-out infinite',
+        'spark-burst': 'spark-burst 0.6s ease-out forwards',
+        'fire-pulse': 'fire-pulse 0.5s ease-in-out infinite',
+        'story-fade': 'story-fade 0.8s ease-in-out',
       },
       keyframes: {
         fall: {
@@ -68,6 +79,53 @@ export default {
         'scale-in': {
           '0%': { transform: 'scale(0.5)', opacity: '0' },
           '100%': { transform: 'scale(1)', opacity: '1' },
+        },
+        'enemy-glow': {
+          '0%, 100%': { boxShadow: '0 0 4px rgba(147, 51, 234, 0.3), 0 0 8px rgba(147, 51, 234, 0.1)' },
+          '50%': { boxShadow: '0 0 12px rgba(147, 51, 234, 0.6), 0 0 24px rgba(147, 51, 234, 0.3)' },
+        },
+        'card-shatter': {
+          '0%': { transform: 'scale(1)', opacity: '1' },
+          '30%': { transform: 'scale(1.2)', opacity: '0.8' },
+          '100%': { transform: 'scale(0)', opacity: '0' },
+        },
+        'creature-idle': {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-3px)' },
+        },
+        'creature-lunge': {
+          '0%': { transform: 'translateX(0) scale(1)' },
+          '40%': { transform: 'translateX(12px) scale(1.2)' },
+          '100%': { transform: 'translateX(0) scale(1)' },
+        },
+        'creature-hit': {
+          '0%': { transform: 'translateX(0)' },
+          '30%': { transform: 'translateX(-8px)' },
+          '60%': { transform: 'translateX(4px)' },
+          '100%': { transform: 'translateX(0)' },
+        },
+        'creature-celebrate': {
+          '0%': { transform: 'translateY(0) scale(1)' },
+          '30%': { transform: 'translateY(-16px) scale(1.2)' },
+          '50%': { transform: 'translateY(0) scale(0.9)' },
+          '70%': { transform: 'translateY(-8px) scale(1.1)' },
+          '100%': { transform: 'translateY(0) scale(1)' },
+        },
+        'flag-wave': {
+          '0%, 100%': { transform: 'skewX(-2deg)' },
+          '50%': { transform: 'skewX(2deg)' },
+        },
+        'spark-burst': {
+          '0%': { transform: 'translate(0, 0) scale(1)', opacity: '1' },
+          '100%': { transform: 'translate(var(--sx), var(--sy)) scale(0)', opacity: '0' },
+        },
+        'fire-pulse': {
+          '0%, 100%': { textShadow: '0 0 4px #e94560, 0 0 8px #e94560' },
+          '50%': { textShadow: '0 0 8px #ff6b6b, 0 0 16px #ff6b6b, 0 0 24px #e94560' },
+        },
+        'story-fade': {
+          '0%': { opacity: '0', transform: 'translateY(10px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
         },
       },
     },

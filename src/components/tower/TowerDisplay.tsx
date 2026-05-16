@@ -22,9 +22,8 @@ export default function TowerDisplay({ height }: TowerDisplayProps) {
     }
   }, [height, prevHeight]);
 
-  const maxVisible = Math.min(height, 25);
+  const maxVisible = Math.min(height, 20);
 
-  // Background stage based on height
   let bgGradient: string;
   let atmosphere: string;
   if (height >= 50) {
@@ -43,15 +42,8 @@ export default function TowerDisplay({ height }: TowerDisplayProps) {
 
   return (
     <>
-      {/* Background atmosphere particles */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-30">
-        <div className="absolute top-[5%] left-[10%] text-lg">{atmosphere.split(' ')[0]}</div>
-        <div className="absolute top-[20%] right-[15%] text-lg">{atmosphere.split(' ')[1]}</div>
-        <div className="absolute top-[60%] left-[8%] text-lg">{atmosphere.split(' ')[2]}</div>
-      </div>
-
-      {/* Tower container — right side */}
-      <div className={`absolute left-1/2 -translate-x-1/2 top-0 bottom-0 w-24 bg-gradient-to-b ${bgGradient} pointer-events-none flex flex-col justify-end items-center pb-2 transition-all duration-1000`}>
+      {/* Tower container — left side, compact */}
+      <div className={`absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-b ${bgGradient} pointer-events-none flex flex-col justify-end items-center pb-2 transition-all duration-1000`}>
         {/* Milestone flags */}
         {Array.from({ length: maxVisible }).map((_, i) => {
           const floorNum = height - i;
@@ -59,10 +51,10 @@ export default function TowerDisplay({ height }: TowerDisplayProps) {
             return (
               <div
                 key={`flag-${floorNum}`}
-                className="absolute right-[85%] animate-scale-in"
-                style={{ bottom: `${(i / maxVisible) * 90 + 5}%` }}
+                className="absolute left-[85%] animate-flag-wave"
+                style={{ bottom: `${(i / maxVisible) * 85 + 8}%` }}
               >
-                <span className="text-lg">🚩</span>
+                <span className="text-base">🚩</span>
                 <span className="text-[8px] text-accent font-bold block -mt-1 text-center">{floorNum}</span>
               </div>
             );
@@ -78,9 +70,8 @@ export default function TowerDisplay({ height }: TowerDisplayProps) {
             const isMilestone = floorNum % 10 === 0;
             const color = FLOOR_COLORS[floorNum % FLOOR_COLORS.length];
 
-            // Perspective: higher floors are narrower
-            const floorWidth = isMilestone ? 56 : 38;
-            const floorHeight = isMilestone ? 14 : 8;
+            const floorWidth = isMilestone ? 52 : 34;
+            const floorHeight = isMilestone ? 12 : 7;
             const marginBottom = isMilestone ? 2 : 1;
 
             return (
@@ -88,7 +79,7 @@ export default function TowerDisplay({ height }: TowerDisplayProps) {
                 key={floorNum}
                 className="transition-all duration-300 rounded-sm"
                 style={{
-                  width: isNew ? floorWidth + 16 : floorWidth,
+                  width: isNew ? floorWidth + 14 : floorWidth,
                   height: floorHeight,
                   backgroundColor: color,
                   marginBottom,
@@ -96,14 +87,13 @@ export default function TowerDisplay({ height }: TowerDisplayProps) {
                     ? `0 0 8px ${color}, 0 0 16px ${color}80`
                     : `0 0 2px ${color}40`,
                   transform: isNew ? 'scale(1.3)' : 'scale(1)',
-                  opacity: 0.9,
+                  opacity: 0.85,
                 }}
               >
-                {/* Windows on non-milestone floors */}
-                {!isMilestone && floorWidth >= 36 && (
-                  <div className="flex justify-center gap-2 h-full items-center">
-                    <div className="w-1 h-1 rounded-full bg-yellow-300/60" />
-                    <div className="w-1 h-1 rounded-full bg-yellow-300/40" />
+                {!isMilestone && floorWidth >= 34 && (
+                  <div className="flex justify-center gap-1.5 h-full items-center">
+                    <div className="w-1 h-1 rounded-full bg-yellow-300/50" />
+                    <div className="w-1 h-1 rounded-full bg-yellow-300/30" />
                   </div>
                 )}
               </div>
@@ -113,13 +103,13 @@ export default function TowerDisplay({ height }: TowerDisplayProps) {
 
         {/* Base */}
         <div
-          className="w-16 h-2 rounded-t-sm"
-          style={{ backgroundColor: '#555', boxShadow: '0 0 6px rgba(100,100,100,0.4)' }}
+          className="w-14 h-2 rounded-t-sm"
+          style={{ backgroundColor: '#555', boxShadow: '0 0 4px rgba(100,100,100,0.3)' }}
         />
 
         {/* Height counter */}
         <div className="mt-1 text-center">
-          <span className="text-sm font-extrabold text-accent drop-shadow-[0_0_8px_rgba(245,197,24,0.7)]">
+          <span className="text-xs font-extrabold text-accent drop-shadow-[0_0_6px_rgba(245,197,24,0.6)]">
             {height}层
           </span>
         </div>

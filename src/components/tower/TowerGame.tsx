@@ -116,9 +116,9 @@ export default function TowerGame({ activeCreatures, onPlayAgain }: TowerGamePro
           addEnergy(event.energy);
           setComboTrigger(c => c + 1);
           addScorePopup(40 + Math.random() * 40, 35 + Math.random() * 25, event.energy, event.combo);
-          playCorrect();
+          requestAnimationFrame(() => playCorrect());
           useGameStore.getState().recordWordResult(event.word, true);
-          if (event.combo >= 3) playCombo(event.combo);
+          if (event.combo >= 3) requestAnimationFrame(() => playCombo(event.combo));
 
           // Battle anim + dialogue
           setBattleAnim('attacking');
@@ -139,7 +139,7 @@ export default function TowerGame({ activeCreatures, onPlayAgain }: TowerGamePro
         case 'word_wrong': {
           setShake(true);
           setTimeout(() => setShake(false), 500);
-          playWrong();
+          requestAnimationFrame(() => playWrong());
           useGameStore.getState().recordWordResult(event.correctWord, false);
 
           setBattleAnim('hit');
@@ -151,14 +151,14 @@ export default function TowerGame({ activeCreatures, onPlayAgain }: TowerGamePro
           break;
         }
         case 'word_missed':
-          playWrong();
+          requestAnimationFrame(() => playWrong());
           useGameStore.getState().recordWordResult(event.word, false);
           break;
         case 'boss_start': {
           setBossActive(true);
           setBossChinese(event.chinese);
           showToast('👹 BOSS 来了！全力迎战！');
-          playBossStart();
+          requestAnimationFrame(() => playBossStart());
 
           setBattleAnim('boss_alert');
           setDialogueContext('boss');
@@ -176,7 +176,7 @@ export default function TowerGame({ activeCreatures, onPlayAgain }: TowerGamePro
           };
           showToast(`💥 BOSS 击败！获得${rarityNames[event.eggRarity]}！`);
           addScorePopup(50, 40, event.energy, 99);
-          playBossDefeat();
+          requestAnimationFrame(() => playBossDefeat());
 
           setBattleAnim('celebrating');
           setTimeout(() => setBattleAnim('idle'), 700);

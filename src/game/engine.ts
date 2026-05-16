@@ -28,9 +28,9 @@ export interface EngineState {
 }
 
 const BOSS_INTERVAL = 10; // boss every 10 words
-const BOSS_FEEDBACK_DURATION = 800; // longer feedback for boss defeat
-
-const FEEDBACK_DURATION = 500; // ms to show feedback before next round
+const BOSS_FEEDBACK_DURATION = 1200;
+const CORRECT_FEEDBACK_DURATION = 600;
+const WRONG_FEEDBACK_DURATION = 1800; // longer pause so students can memorize
 
 export function createEngineState(activeCreatures: Creature[]): EngineState {
   const effects = resolveActiveEffects(activeCreatures);
@@ -116,7 +116,7 @@ export function tick(state: EngineState, deltaMs: number, fieldHeight: number): 
 
   // Handle feedback timer (pause during feedback)
   if (feedbackState) {
-    const fbDuration = feedbackState === 'boss_defeated' ? BOSS_FEEDBACK_DURATION : FEEDBACK_DURATION;
+    const fbDuration = feedbackState === 'boss_defeated' ? BOSS_FEEDBACK_DURATION : feedbackState === 'wrong' ? WRONG_FEEDBACK_DURATION : CORRECT_FEEDBACK_DURATION;
     feedbackTimer += deltaMs;
     if (feedbackTimer >= fbDuration) {
       // Feedback over, start new round

@@ -10,7 +10,7 @@ interface FallingWordCardProps {
 
 export default memo(function FallingWordCard({ word, feedback, isCorrectWord, onWordTap }: FallingWordCardProps) {
   const wordLen = word.word.length;
-  const width = Math.min(Math.max(wordLen * 16 + 24, 72), 180);
+  const width = Math.min(Math.max(wordLen * 18 + 28, 80), 200);
 
   let borderColor = 'border-purple-800/60';
   let bgColor = 'bg-purple-950/30';
@@ -49,7 +49,7 @@ export default memo(function FallingWordCard({ word, feedback, isCorrectWord, on
 
   return (
     <div
-      className={`absolute flex items-center justify-center rounded-lg font-bold text-sm
+      className={`absolute flex items-center justify-center rounded-lg font-bold text-base
         border active:scale-95 cursor-pointer select-none
         ${borderColor} ${bgColor} ${textColor} ${extraClass} ${enemyGlow}`}
       style={{

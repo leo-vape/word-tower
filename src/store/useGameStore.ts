@@ -1,12 +1,13 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { PersistedGameState } from '../types/storage';
+import type { PersistedGameState, WordStat } from '../types/storage';
 import type { RoundResult } from '../types/game';
 import type { Egg, EggRarity } from '../types/hatchery';
 import type { Creature } from '../types/creature';
 import type { CollectionEntry } from '../types/collection';
 import { eggDefinitions, rollCreature } from '../data/eggs';
 import { getCreature } from '../data/creatures';
+import { wordBank } from '../data/wordBank';
 import { INITIAL_ENERGY, DAILY_BONUS_ENERGY, EGG_SLOT_MILESTONES } from '../utils/constants';
 import { getTodayISO } from '../utils/storage';
 
@@ -23,6 +24,8 @@ interface GameStore extends PersistedGameState {
   checkDailyBonus: () => number;
   checkEggSlotUnlock: () => void;
   getShareData: () => { towerHeight: number; totalWordsCompleted: number; totalCreaturesCollected: number; rarestCreature: Creature | null; energyStones: number; date: string };
+  recordWordResult: (word: string, correct: boolean) => void;
+  getWeakWords: (limit?: number) => Array<{ word: string; zh: string; wrong: number; mastery: number }>;
 }
 
 export const useGameStore = create<GameStore>()(
@@ -40,6 +43,7 @@ export const useGameStore = create<GameStore>()(
       creatureStats: {},
       activeCreatureIds: [],
       settings: { soundEnabled: true, hapticEnabled: true },
+      wordStats: {},
 
       addEnergy: (amount) => set(s => ({ energyStones: s.energyStones + amount })),
 
@@ -179,6 +183,54 @@ export const useGameStore = create<GameStore>()(
         if (newMax !== state.maxEggSlots) {
           set({ maxEggSlots: newMax });
         }
+      },
+
+      recordWordResult: (word, correct) => {
+        const state = get();
+        const existing = state.wordStats[word];
+        const today = getTodayISO();
+
+        const calcMastery = (c: number, w: number, s: number): number => {
+          if (c >= 10 && s >= 5) return 5;
+          if (c >= 7 && s >= 3) return 4;
+          if (c >= 4) return 3;
+          if (c >= 1) return 2;
+          return 1;
+        };
+
+        const updated: WordStat = existing
+          ? {
+              correct: existing.correct + (correct ? 1 : 0),
+              wrong: existing.wrong + (correct ? 0 : 1),
+              streak: correct ? existing.streak + 1 : 0,
+              lastSeen: today,
+              mastery: correct
+                ? calcMastery(existing.correct + 1, existing.wrong, existing.streak + 1)
+                : Math.max(0, existing.mastery - 1),
+            }
+          : {
+              correct: correct ? 1 : 0,
+              wrong: correct ? 0 : 1,
+              streak: correct ? 1 : 0,
+              lastSeen: today,
+              mastery: correct ? 1 : 0,
+            };
+
+        set(s => ({
+          wordStats: { ...s.wordStats, [word]: updated },
+        }));
+      },
+
+      getWeakWords: (limit = 5) => {
+        const state = get();
+        return Object.entries(state.wordStats)
+          .filter(([, s]) => s.mastery < 4)
+          .sort((a, b) => b[1].wrong - a[1].wrong || a[1].mastery - b[1].mastery)
+          .slice(0, limit)
+          .map(([word, s]) => {
+            const entry = wordBank.find(w => w.en === word);
+            return { word, zh: entry?.zh ?? '', wrong: s.wrong, mastery: s.mastery };
+          });
       },
 
       getShareData: () => {

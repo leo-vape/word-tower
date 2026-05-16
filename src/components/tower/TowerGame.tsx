@@ -4,6 +4,7 @@ import { useGameLoop } from '../../hooks/useGameLoop';
 import { useGameStore } from '../../store/useGameStore';
 import { useGameSound } from '../../hooks/useGameSound';
 import { showToast } from '../ui/Toast';
+import { speakWord } from '../../utils/speech';
 import WordField from './WordField';
 import GameHUD from './GameHUD';
 import GameField from './GameField';
@@ -113,6 +114,8 @@ export default function TowerGame({ activeCreatures, onPlayAgain }: TowerGamePro
           setComboTrigger(c => c + 1);
           addScorePopup(40 + Math.random() * 40, 35 + Math.random() * 25, event.energy, event.combo);
           playCorrect();
+          speakWord(event.word);
+          useGameStore.getState().recordWordResult(event.word, true);
           if (event.combo >= 3) playCombo(event.combo);
 
           // Battle anim + dialogue
@@ -135,6 +138,7 @@ export default function TowerGame({ activeCreatures, onPlayAgain }: TowerGamePro
           setShake(true);
           setTimeout(() => setShake(false), 500);
           playWrong();
+          useGameStore.getState().recordWordResult(event.correctWord, false);
 
           setBattleAnim('hit');
           setTimeout(() => setBattleAnim('idle'), 450);
@@ -146,6 +150,7 @@ export default function TowerGame({ activeCreatures, onPlayAgain }: TowerGamePro
         }
         case 'word_missed':
           playWrong();
+          useGameStore.getState().recordWordResult(event.word, false);
           break;
         case 'boss_start': {
           setBossActive(true);
@@ -174,6 +179,7 @@ export default function TowerGame({ activeCreatures, onPlayAgain }: TowerGamePro
           setBattleAnim('celebrating');
           setTimeout(() => setBattleAnim('idle'), 700);
           setHitEffectTrigger(h => h + 1);
+          speakWord(event.word);
           setTimeout(() => { bossDefeatRef.current = false; }, 900);
           break;
         }

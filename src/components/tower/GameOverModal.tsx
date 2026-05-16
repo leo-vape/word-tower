@@ -1,5 +1,6 @@
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
+import { useGameStore } from '../../store/useGameStore';
 
 interface GameOverModalProps {
   height: number;
@@ -25,6 +26,7 @@ export default function GameOverModal({
   const seconds = Math.floor(elapsedMs / 1000);
   const minutes = Math.floor(seconds / 60);
   const secs = seconds % 60;
+  const weakWords = useGameStore(s => s.getWeakWords(5));
 
   return (
     <Modal open onClose={onPlayAgain} title="爬塔结束！">
@@ -63,6 +65,29 @@ export default function GameOverModal({
             <div className="text-xs text-gray-500">持续时间</div>
           </div>
         </div>
+
+        {/* Weak words */}
+        {weakWords.length > 0 && (
+          <div className="bg-bg rounded-xl p-3">
+            <div className="text-xs text-gray-500 mb-2">📝 需要加强的单词</div>
+            <div className="space-y-1">
+              {weakWords.map(w => (
+                <div key={w.word} className="flex items-center justify-between text-xs">
+                  <span>
+                    <span className="text-white font-bold">{w.word}</span>
+                    <span className="text-gray-500 ml-1">{w.zh}</span>
+                  </span>
+                  <span className="text-gray-600">
+                    错{w.wrong}次
+                    <span className={`ml-1 ${w.mastery <= 1 ? 'text-red-400' : w.mastery <= 2 ? 'text-yellow-400' : 'text-green-400'}`}>
+                      {'⬤'.repeat(Math.max(1, w.mastery))}{'⬤'.repeat(5 - Math.max(1, w.mastery)).replace(/⬤/g, '〇')}
+                    </span>
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <Button variant="primary" size="lg" onClick={onPlayAgain} className="w-full">
           再来一局

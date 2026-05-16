@@ -3,6 +3,7 @@ import type { WordEntry } from '../data/wordBank';
 import { getWordsByDifficulty } from '../data/wordBank';
 import { generateDistractors } from './distractors';
 import type { DifficultyParams } from './difficulty';
+import { useGameStore } from '../store/useGameStore';
 
 let nextId = 0;
 
@@ -16,8 +17,22 @@ const COL_COUNT = 3;
 export function createRound(difficulty: DifficultyParams): RoundWords {
   const pool = getWordsByDifficulty(difficulty.level);
 
-  const idx = Math.floor(Math.random() * pool.length);
-  const target = pool[idx];
+  // Weight toward unmastered words (80% from mastery 0-3, 20% from 4-5)
+  const wordStats = useGameStore.getState().wordStats;
+  const lowMastery: WordEntry[] = [];
+  const highMastery: WordEntry[] = [];
+  for (const w of pool) {
+    const stat = wordStats[w.en];
+    if (!stat || stat.mastery < 4) lowMastery.push(w);
+    else highMastery.push(w);
+  }
+
+  const targetPool = lowMastery.length > 0 && Math.random() < 0.8
+    ? lowMastery
+    : highMastery.length > 0 ? highMastery : pool;
+
+  const idx = Math.floor(Math.random() * targetPool.length);
+  const target = targetPool[idx];
 
   const distractors = generateDistractors(target.en, pool, difficulty.distractorCount);
   const options = [target.en, ...distractors];

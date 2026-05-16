@@ -7,17 +7,19 @@ function loadBestVoice(): void {
 
   voicesLoaded = true;
 
-  // Preferred voices: British first (matches Chinese textbook RP), then American
+  // Female voices first (clearer for learners), British preferred
   const preferred = [
-    'Daniel',           // macOS en-GB — excellent quality
-    'Serena',           // macOS en-GB
+    'Serena',           // macOS en-GB ♀
+    'Samantha',         // macOS en-US ♀
+    'Google UK English Female',
+    'Google US English Female',
+    'Microsoft Zira',   // Windows en-US ♀
+    'Microsoft Hazel',  // Windows en-GB ♀
+    'Daniel',           // macOS en-GB ♂
+    'Alex',             // macOS en-US ♂
     'Google UK English',
-    'Microsoft Hazel',  // Windows en-GB
-    'Samantha',         // macOS en-US
-    'Alex',             // macOS en-US
     'Google US English',
     'Microsoft David',
-    'Microsoft Zira',
   ];
   for (const name of preferred) {
     const match = voices.find(v => v.name === name);

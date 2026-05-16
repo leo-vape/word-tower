@@ -50,7 +50,7 @@ export default memo(function FallingWordCard({ word, feedback, isCorrectWord, on
   return (
     <div
       className={`absolute flex items-center justify-center rounded-lg font-bold text-sm
-        border transition-all duration-200 active:scale-95 cursor-pointer select-none
+        border active:scale-95 cursor-pointer select-none
         ${borderColor} ${bgColor} ${textColor} ${extraClass} ${enemyGlow}`}
       style={{
         width,
@@ -60,6 +60,7 @@ export default memo(function FallingWordCard({ word, feedback, isCorrectWord, on
         transform: `translateX(-50%)`,
         boxShadow: shadowStyle || undefined,
         zIndex: 1,
+        transition: 'border-color 150ms, background-color 150ms, color 150ms, box-shadow 300ms, transform 200ms',
       }}
       onPointerDown={(e) => {
         e.preventDefault();

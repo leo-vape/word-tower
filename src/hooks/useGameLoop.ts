@@ -32,15 +32,17 @@ export interface GameViewState {
 }
 
 const FIELD_H = 400;
-const TICK_MS = 50;
+const TICK_MS = 33;
 const COL_COUNT = 3;
 
 export function useGameLoop(activeCreatures: Creature[]) {
   const engineRef = useRef<EngineState | null>(null);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const rafRef = useRef<number>(0);
   const fieldRef = useRef<HTMLDivElement | null>(null);
   const startedRef = useRef(false);
   const roundCountRef = useRef(0);
+  // Track last rendered view to skip redundant setView calls
+  const lastViewRef = useRef<GameViewState | null>(null);
 
   const [view, setView] = useState<GameViewState>(() => ({
     phase: 'idle',
@@ -63,14 +65,12 @@ export function useGameLoop(activeCreatures: Creature[]) {
   }));
   const [events, setEvents] = useState<GameEvent[]>([]);
 
-  const syncView = useCallback(() => {
-    if (!engineRef.current) return;
-    const s = engineRef.current;
-
+  const buildView = useCallback((): GameViewState => {
+    const s = engineRef.current!;
     const targetWord = s.targetWord;
     const correctWord = s.words.find(w => w.isCorrect);
 
-    setView({
+    return {
       phase: s.phase,
       fallingWords: s.words.map(w => {
         const colPercent = (w.col + 0.5) / COL_COUNT * 100;
@@ -100,8 +100,25 @@ export function useGameLoop(activeCreatures: Creature[]) {
       difficultyLevel: s.difficulty.level,
       elapsedMs: s.elapsedMs,
       roundTrigger: roundCountRef.current,
-    });
+    };
   }, []);
+
+  // Only update React state if the view actually changed
+  const syncViewIfChanged = useCallback(() => {
+    if (!engineRef.current) return;
+    const next = buildView();
+    const prev = lastViewRef.current;
+    // Quick check: if fallingWords positions are the same and feedback/phase unchanged, skip
+    if (prev && prev.phase === next.phase && prev.feedback === next.feedback) {
+      const positionsSame = next.fallingWords.length === prev.fallingWords.length
+        && next.fallingWords.every((w, i) => w.y === prev!.fallingWords[i]?.y && w.id === prev!.fallingWords[i]?.id);
+      if (positionsSame && prev.combo === next.combo && prev.elapsedMs === next.elapsedMs) {
+        return; // No meaningful change, skip re-render
+      }
+    }
+    lastViewRef.current = next;
+    setView(next);
+  }, [buildView]);
 
   const handleStart = useCallback(() => {
     if (startedRef.current) return;
@@ -112,50 +129,65 @@ export function useGameLoop(activeCreatures: Creature[]) {
     engineRef.current = startGame(state);
     roundCountRef.current++;
     setEvents([]);
-    syncView();
+    lastViewRef.current = null;
+    syncViewIfChanged();
 
-    timerRef.current = setInterval(() => {
+    let lastTime = performance.now();
+    let accumulator = 0;
+
+    const loop = (now: number) => {
       const eng = engineRef.current;
       if (!eng || eng.phase !== 'playing') {
-        if (timerRef.current) {
-          clearInterval(timerRef.current);
-          timerRef.current = null;
-        }
+        rafRef.current = 0;
+        syncViewIfChanged(); // final render
         return;
       }
 
-      const fieldHeight = fieldRef.current?.clientHeight || FIELD_H;
-      const result = tick(eng, TICK_MS, fieldHeight);
-      engineRef.current = result.state;
+      const rawDelta = now - lastTime;
+      lastTime = now;
+      // Clamp to avoid spiral of death after tab hidden
+      const delta = Math.min(rawDelta, 200);
+      accumulator += delta;
 
-      if (result.events.length > 0) {
-        setEvents(prev => [...prev, ...result.events]);
-      }
+      let eventsEmitted = false;
+      while (accumulator >= TICK_MS) {
+        const fieldHeight = fieldRef.current?.clientHeight || FIELD_H;
+        const result = tick(eng, TICK_MS, fieldHeight);
+        engineRef.current = result.state;
 
-      // Check if feedback just ended (new round started)
-      if (eng.feedbackState && !result.state.feedbackState) {
-        roundCountRef.current++;
-      }
+        if (result.events.length > 0) {
+          setEvents(prev => [...prev, ...result.events]);
+          eventsEmitted = true;
+        }
 
-      syncView();
+        if (eng.feedbackState && !result.state.feedbackState) {
+          roundCountRef.current++;
+        }
 
-      if (result.state.phase !== 'playing') {
-        syncView();
-        if (timerRef.current) {
-          clearInterval(timerRef.current);
-          timerRef.current = null;
+        accumulator -= TICK_MS;
+
+        if (result.state.phase !== 'playing') {
+          syncViewIfChanged();
+          rafRef.current = 0;
+          return;
         }
       }
-    }, TICK_MS);
-  }, [activeCreatures, syncView]);
+
+      syncViewIfChanged();
+      rafRef.current = requestAnimationFrame(loop);
+    };
+
+    rafRef.current = requestAnimationFrame(loop);
+  }, [activeCreatures, syncViewIfChanged]);
 
   const handleStop = useCallback(() => {
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = 0;
     }
     engineRef.current = null;
     startedRef.current = false;
+    lastViewRef.current = null;
   }, []);
 
   const handleWordTap = useCallback((wordId: string) => {
@@ -169,13 +201,12 @@ export function useGameLoop(activeCreatures: Creature[]) {
       setEvents(prev => [...prev, ...result.events]);
     }
 
-    // Check if feedback ended → new round
     if (result.state.feedbackState === null && eng.feedbackState) {
       roundCountRef.current++;
     }
 
-    syncView();
-  }, [syncView]);
+    syncViewIfChanged();
+  }, [syncViewIfChanged]);
 
   const clearEvents = useCallback(() => {
     setEvents([]);

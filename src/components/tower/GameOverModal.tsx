@@ -1,9 +1,8 @@
 import { useMemo, useEffect, useCallback } from 'react';
-import Modal from '../ui/Modal';
-import Button from '../ui/Button';
 import { useGameStore } from '../../store/useGameStore';
 import { showToast } from '../ui/Toast';
 import { wordBank } from '../../data/wordBank';
+import Button from '../ui/Button';
 
 interface GameOverModalProps {
   height: number;
@@ -17,14 +16,8 @@ interface GameOverModalProps {
 }
 
 export default function GameOverModal({
-  height,
-  energy,
-  maxCombo,
-  wordsCompleted,
-  elapsedMs,
-  lastChinese,
-  lastWord,
-  onPlayAgain,
+  height, energy, maxCombo, wordsCompleted, elapsedMs,
+  lastChinese, lastWord, onPlayAgain,
 }: GameOverModalProps) {
   const seconds = Math.floor(elapsedMs / 1000);
   const minutes = Math.floor(seconds / 60);
@@ -37,19 +30,14 @@ export default function GameOverModal({
   const isNewBest = height > 0 && height >= bestHeight;
 
   const shareUrl = useMemo(() => {
-    const params = new URLSearchParams();
-    params.set('h', String(height));
-    params.set('e', String(energy));
-    params.set('c', String(maxCombo));
-    params.set('w', String(wordsCompleted));
-    params.set('n', playerName || '单词法师');
-    params.set('em', playerEmoji || '🧙');
-    return `https://word-tower.pages.dev?${params.toString()}`;
+    const p = new URLSearchParams();
+    p.set('h', String(height)); p.set('e', String(energy));
+    p.set('c', String(maxCombo)); p.set('w', String(wordsCompleted));
+    p.set('n', playerName || '单词法师'); p.set('em', playerEmoji || '🧙');
+    return `https://word-tower.pages.dev?${p.toString()}`;
   }, [height, energy, maxCombo, wordsCompleted, playerName, playerEmoji]);
 
-  useEffect(() => {
-    history.replaceState(null, '', shareUrl);
-  }, [shareUrl]);
+  useEffect(() => { history.replaceState(null, '', shareUrl); }, [shareUrl]);
 
   const weakWords = useMemo(() => {
     return Object.entries(wordStats)
@@ -70,93 +58,76 @@ export default function GameOverModal({
         url: shareUrl,
       });
       return;
-    } catch { /* fall through */ }
-
+    } catch {}
     try {
       await navigator.clipboard.writeText(shareUrl);
       showToast('🔗 链接已复制，点右上角 ··· 发送给朋友');
     } catch {
-      const textarea = document.createElement('textarea');
-      textarea.value = shareUrl;
-      textarea.style.cssText = 'position:fixed;left:-9999px;top:-9999px';
-      document.body.appendChild(textarea);
-      textarea.focus();
-      textarea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textarea);
+      const ta = document.createElement('textarea');
+      ta.value = shareUrl; ta.style.cssText = 'position:fixed;left:-9999px';
+      document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); document.body.removeChild(ta);
       showToast('🔗 链接已复制，点右上角 ··· 发送给朋友');
     }
   }, [shareUrl, playerEmoji, playerName, height]);
 
+  // wrapped in a function so Modal can render it with its own scroll + footer
   return (
-    <Modal open onClose={onPlayAgain} title="爬塔结束！">
+    <div className="flex flex-col" style={{ minHeight: 0 }}>
+      {/* Content area: always fits, no scroll needed */}
       <div className="space-y-3">
-        {/* Player + best badge */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-xl">{playerEmoji || '🧙'}</span>
             <span className="text-white font-bold text-sm">{playerName || '单词法师'}</span>
           </div>
-          {isNewBest && (
-            <span className="text-xs text-yellow-400 animate-pulse">🏆 新纪录！</span>
-          )}
+          {isNewBest && <span className="text-xs text-yellow-400 animate-pulse">🏆 新纪录</span>}
         </div>
 
-        {/* Last word */}
         {lastChinese && (
-          <div className="text-center py-1.5 bg-bg rounded-lg">
-            <span className="text-xs text-gray-500 mr-1">最后一词</span>
-            <span className="text-sm font-bold text-white">{lastChinese}</span>
-            <span className="text-xs text-gray-400 ml-1">{lastWord}</span>
+          <div className="text-center py-1.5 bg-bg rounded-lg text-xs">
+            <span className="text-gray-500">最后一词 </span>
+            <span className="text-white font-bold">{lastChinese}</span>
+            <span className="text-gray-400 ml-1">{lastWord}</span>
           </div>
         )}
 
-        {/* Compact stats */}
         <div className="grid grid-cols-4 gap-2">
-          <div className="bg-bg rounded-lg p-2 text-center">
-            <div className="text-lg font-bold text-accent">{height}</div>
-            <div className="text-[10px] text-gray-500">层</div>
-          </div>
-          <div className="bg-bg rounded-lg p-2 text-center">
-            <div className="text-base font-bold text-energy">{energy}</div>
-            <div className="text-[10px] text-gray-500">能量</div>
-          </div>
-          <div className="bg-bg rounded-lg p-2 text-center">
-            <div className="text-base font-bold text-yellow-400">x{maxCombo}</div>
-            <div className="text-[10px] text-gray-500">连击</div>
-          </div>
-          <div className="bg-bg rounded-lg p-2 text-center">
-            <div className="text-base font-bold text-gray-300">{minutes}:{String(secs).padStart(2, '0')}</div>
-            <div className="text-[10px] text-gray-500">用时</div>
-          </div>
+          {[
+            [String(height), '层', 'text-accent'],
+            [String(energy), '能量', 'text-energy'],
+            [`x${maxCombo}`, '连击', 'text-yellow-400'],
+            [`${minutes}:${String(secs).padStart(2, '0')}`, '用时', 'text-gray-300'],
+          ].map(([v, l, c]) => (
+            <div key={l} className="bg-bg rounded-lg p-2 text-center">
+              <div className={`text-base font-bold ${c}`}>{v}</div>
+              <div className="text-[10px] text-gray-500">{l}</div>
+            </div>
+          ))}
         </div>
 
-        {/* Weak words — only if any, max 3 */}
         {weakWords.length > 0 && (
-          <div className="bg-bg rounded-lg p-2">
-            <div className="text-[10px] text-gray-500 mb-1">📝 需要加强</div>
-            <div className="flex flex-wrap gap-x-4 gap-y-0.5">
-              {weakWords.map(w => (
-                <span key={w.word} className="text-xs">
-                  <span className="text-white font-medium">{w.word}</span>
-                  <span className="text-gray-500 ml-1">{w.zh}</span>
-                  <span className="text-gray-600 ml-1">错{w.wrong}</span>
-                </span>
-              ))}
-            </div>
+          <div className="bg-bg rounded-lg p-2 text-xs">
+            <span className="text-gray-500 mr-2">📝 需要加强</span>
+            {weakWords.map(w => (
+              <span key={w.word} className="mr-3">
+                <span className="text-white font-medium">{w.word}</span>
+                <span className="text-gray-500 ml-0.5">{w.zh}</span>
+              </span>
+            ))}
           </div>
         )}
-
-        {/* Buttons — always at bottom */}
-        <div className="flex gap-2 pt-1">
-          <Button variant="primary" size="lg" onClick={handleShare} className="flex-1">
-            📤 分享给好友
-          </Button>
-          <Button variant="secondary" size="lg" onClick={onPlayAgain} className="flex-1">
-            再来一局
-          </Button>
-        </div>
       </div>
-    </Modal>
+
+      {/* Buttons footer — sticky so always visible even if content scrolls */}
+      <div className="sticky bottom-0 bg-surface flex gap-2 pt-3 mt-1 border-t border-gray-800">
+        <Button variant="primary" size="lg" onClick={handleShare} className="flex-1">
+          📤 分享给好友
+        </Button>
+        <Button variant="secondary" size="lg" onClick={onPlayAgain} className="flex-1">
+          再来一局
+        </Button>
+      </div>
+    </div>
   );
 }

@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useGameStore } from '../../store/useGameStore';
 import { getCreature } from '../../data/creatures';
 import { APP_VERSION } from '../../utils/constants';
@@ -10,6 +11,18 @@ interface TowerStartScreenProps {
   onShowHelp?: () => void;
 }
 
+function parseChallenge(): { name: string; emoji: string; height: number } | null {
+  const params = new URLSearchParams(window.location.search);
+  const h = params.get('h');
+  const n = params.get('n');
+  if (!h || !n) return null;
+  return {
+    name: n,
+    emoji: params.get('em') || '🧙',
+    height: parseInt(h, 10) || 0,
+  };
+}
+
 export default function TowerStartScreen({ onStart, onShowHelp }: TowerStartScreenProps) {
   const bestHeight = useGameStore(s => s.bestHeight);
   const totalWords = useGameStore(s => s.totalWordsCompleted);
@@ -19,12 +32,26 @@ export default function TowerStartScreen({ onStart, onShowHelp }: TowerStartScre
   const playerName = useGameStore(s => s.playerName);
   const playerEmoji = useGameStore(s => s.playerEmoji);
 
+  const challenge = useMemo(() => parseChallenge(), []);
+
   const activeCreatures = activeCreatureIds
     .map(id => getCreature(id))
     .filter(c => c != null);
 
   return (
     <div className="flex flex-col items-center min-h-[80vh] p-6">
+      {/* Challenge banner */}
+      {challenge && (
+        <div className="w-full max-w-xs mb-4 bg-accent/10 border border-accent/30 rounded-xl p-4 text-center animate-scale-in">
+          <div className="text-2xl mb-1">{challenge.emoji}</div>
+          <div className="text-sm text-gray-300">
+            <span className="text-white font-bold">{challenge.name}</span> 向你发起挑战！
+          </div>
+          <div className="text-2xl font-bold text-accent mt-1">🗼 {challenge.height} 层</div>
+          <div className="text-xs text-gray-500 mt-1">你能超过吗？</div>
+        </div>
+      )}
+
       {/* Title */}
       <div className="text-6xl mb-3">🗼</div>
       <div className="flex items-center gap-2 mb-1">

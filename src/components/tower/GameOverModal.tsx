@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import { useGameStore } from '../../store/useGameStore';
@@ -36,6 +36,26 @@ export default function GameOverModal({
 
   const isNewBest = height > 0 && height >= bestHeight;
 
+  // Build share URL with score encoded in query params
+  const shareUrl = useMemo(() => {
+    const base = 'https://word-tower.pages.dev';
+    const name = playerName || '单词法师';
+    const emoji = playerEmoji || '🧙';
+    const params = new URLSearchParams();
+    params.set('h', String(height));
+    params.set('e', String(energy));
+    params.set('c', String(maxCombo));
+    params.set('w', String(wordsCompleted));
+    params.set('n', name);
+    params.set('em', emoji);
+    return `${base}?${params.toString()}`;
+  }, [height, energy, maxCombo, wordsCompleted, playerName, playerEmoji]);
+
+  // Update browser URL so WeChat "..." menu shares the link with score
+  useEffect(() => {
+    history.replaceState(null, '', shareUrl);
+  }, [shareUrl]);
+
   const weakWords = useMemo(() => {
     return Object.entries(wordStats)
       .filter(([, s]) => s.mastery < 4)
@@ -47,16 +67,22 @@ export default function GameOverModal({
       });
   }, [wordStats]);
 
-  const gameUrl = 'https://word-tower.pages.dev';
-  const shareText = `${playerEmoji} ${playerName || '单词法师'}\n🗼 爬塔 ${height} 层 | 最佳 ${bestHeight} 层\n⚡ 能量石 +${energy}\n📝 拼对 ${wordsCompleted} 词\n🔥 最大连击 x${maxCombo}\n⏱ ${minutes}:${String(secs).padStart(2, '0')}\n\n🧙 一起挑战单词爬塔！\n${gameUrl}`;
+  const shareText = `${playerEmoji} ${playerName || '单词法师'} 向你发起挑战！
+🗼 爬到了 ${height} 层
+⚡ 能量石 +${energy}
+🔥 最大连击 x${maxCombo}
+⏱ ${minutes}:${String(secs).padStart(2, '0')}
+
+来试试你能不能超过我吧！
+${shareUrl}`;
 
   const handleCopyLink = async () => {
     try {
-      await navigator.clipboard.writeText(gameUrl);
+      await navigator.clipboard.writeText(shareUrl);
       showToast('🔗 链接已复制，去微信粘贴给好友吧！');
     } catch {
       const textarea = document.createElement('textarea');
-      textarea.value = gameUrl;
+      textarea.value = shareUrl;
       textarea.style.cssText = 'position:fixed;left:-9999px;top:-9999px';
       document.body.appendChild(textarea);
       textarea.focus();
@@ -70,7 +96,7 @@ export default function GameOverModal({
   const handleCopyCard = async () => {
     try {
       await navigator.clipboard.writeText(shareText);
-      showToast('📋 战绩已复制，去粘贴吧！');
+      showToast('📋 挑战书已复制，去粘贴吧！');
     } catch {
       const textarea = document.createElement('textarea');
       textarea.value = shareText;
@@ -80,7 +106,7 @@ export default function GameOverModal({
       textarea.select();
       document.execCommand('copy');
       document.body.removeChild(textarea);
-      showToast('📋 战绩已复制，去粘贴吧！');
+      showToast('📋 挑战书已复制，去粘贴吧！');
     }
   };
 
@@ -104,11 +130,11 @@ export default function GameOverModal({
 
         {/* WeChat share guide */}
         <div className="bg-energy/10 border border-energy/30 rounded-xl p-4 text-center">
-          <div className="text-lg mb-2">📤 分享给好友一起玩</div>
+          <div className="text-lg mb-2">📤 分享战绩给好友</div>
           <div className="text-sm text-gray-300 leading-relaxed">
             点击右上角 <span className="text-white font-bold text-lg">···</span> → <span className="text-white font-bold">发送给朋友</span>
           </div>
-          <div className="text-xs text-gray-500 mt-1">好友点开链接就能直接玩</div>
+          <div className="text-xs text-gray-500 mt-1">好友会看到你的战绩，点开就能挑战你！</div>
         </div>
 
         {/* Stats card */}
@@ -169,7 +195,10 @@ export default function GameOverModal({
 
         <div className="flex gap-3">
           <Button variant="secondary" size="lg" onClick={handleCopyLink} className="flex-1">
-            📋 复制链接
+            🔗 复制链接
+          </Button>
+          <Button variant="secondary" size="lg" onClick={handleCopyCard} className="flex-1">
+            📋 复制挑战书
           </Button>
           <Button variant="primary" size="lg" onClick={onPlayAgain} className="flex-1">
             再来一局

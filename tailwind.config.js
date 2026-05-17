@@ -81,8 +81,8 @@ export default {
           '100%': { transform: 'scale(1)', opacity: '1' },
         },
         'enemy-glow': {
-          '0%, 100%': { boxShadow: '0 0 4px rgba(147, 51, 234, 0.3), 0 0 8px rgba(147, 51, 234, 0.1)' },
-          '50%': { boxShadow: '0 0 12px rgba(147, 51, 234, 0.6), 0 0 24px rgba(147, 51, 234, 0.3)' },
+          '0%, 100%': { boxShadow: '0 0 2px rgba(147, 51, 234, 0.2)' },
+          '50%': { boxShadow: '0 0 6px rgba(147, 51, 234, 0.4)' },
         },
         'card-shatter': {
           '0%': { transform: 'scale(1)', opacity: '1' },
@@ -91,7 +91,7 @@ export default {
         },
         'creature-idle': {
           '0%, 100%': { transform: 'translateY(0)' },
-          '50%': { transform: 'translateY(-3px)' },
+          '50%': { transform: 'translateY(-2px)' },
         },
         'creature-lunge': {
           '0%': { transform: 'translateX(0) scale(1)' },
@@ -120,8 +120,8 @@ export default {
           '100%': { transform: 'translate(var(--sx), var(--sy)) scale(0)', opacity: '0' },
         },
         'fire-pulse': {
-          '0%, 100%': { textShadow: '0 0 4px #e94560, 0 0 8px #e94560' },
-          '50%': { textShadow: '0 0 8px #ff6b6b, 0 0 16px #ff6b6b, 0 0 24px #e94560' },
+          '0%, 100%': { textShadow: '0 0 2px #e94560' },
+          '50%': { textShadow: '0 0 6px #ff6b6b' },
         },
         'story-fade': {
           '0%': { opacity: '0', transform: 'translateY(10px)' },

@@ -51,12 +51,10 @@ export default function CreatureDialogue({ creatures, trigger, context }: Creatu
   const speaker = creatures[speakerIdx];
 
   return (
-    <div className="absolute top-[30%] left-1/2 -translate-x-1/2 z-20 pointer-events-none animate-scale-in">
-      <div className="flex flex-col items-center">
-        <div className="text-2xl mb-1">{speaker?.emoji}</div>
-        <div className="bg-surface/95 text-white text-xs px-3 py-1.5 rounded-lg border border-gray-600 shadow-lg">
-          {text}
-        </div>
+    <div className="absolute bottom-[18%] left-1/2 -translate-x-1/2 z-25 pointer-events-none animate-scale-in">
+      <div className="bg-surface/95 text-white text-xs px-3 py-1.5 rounded-lg border border-gray-600 shadow-lg">
+        <span className="mr-1">{speaker?.emoji}</span>
+        {text}
       </div>
     </div>
   );

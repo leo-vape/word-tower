@@ -7,7 +7,7 @@ interface HitEffectProps {
   trigger: number; // increment to fire
 }
 
-const SPARK_COUNT = 8;
+const SPARK_COUNT = 4;
 const SPARK_COLORS = ['#f5c518', '#e94560', '#00e5ff', '#c471ed', '#4da6ff', '#ff6b6b'];
 
 export default function HitEffect({ x, y, type, trigger }: HitEffectProps) {

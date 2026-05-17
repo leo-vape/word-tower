@@ -1,4 +1,4 @@
-import { type ReactNode, useMemo, memo } from 'react';
+import { type ReactNode, memo } from 'react';
 import ScorePopup from './ScorePopup';
 
 interface GameFieldProps {
@@ -9,7 +9,7 @@ interface GameFieldProps {
 }
 
 // Pre-compute particle config — static, not regenerated each tick
-const PARTICLES = Array.from({ length: 10 }).map((_, i) => ({
+const PARTICLES = Array.from({ length: 5 }).map((_, i) => ({
   key: i,
   width: `${2 + (i * 3) % 4}px`,
   height: `${2 + (i * 3) % 4}px`,
@@ -21,27 +21,12 @@ const PARTICLES = Array.from({ length: 10 }).map((_, i) => ({
 }));
 
 export default memo(function GameField({ children, combo, shake, scorePopups }: GameFieldProps) {
-  const comboGlow = useMemo(() => {
-    if (combo < 3) return undefined;
-    return combo >= 7
-      ? 'inset 0 0 40px rgba(255,215,0,0.3), 0 0 25px rgba(255,215,0,0.2)'
-      : 'inset 0 0 25px rgba(233,69,96,0.25), 0 0 15px rgba(233,69,96,0.15)';
-  }, [combo]);
-
   return (
     <div
       className={`relative flex-1 min-h-[200px] bg-gradient-to-b from-[#0f0f23] via-[#1a1030] to-[#0f0f23] overflow-hidden transition-all duration-300
-        ${combo >= 5 ? 'shadow-[inset_0_0_60px_rgba(233,69,96,0.12)]' : ''}
-        ${combo >= 8 ? 'shadow-[inset_0_0_80px_rgba(255,215,0,0.15)]' : ''}
         ${shake ? 'animate-shake' : ''}
       `}
     >
-      {combo >= 3 && (
-        <div
-          className="absolute inset-0 pointer-events-none z-10 rounded-xl transition-opacity duration-300"
-          style={{ boxShadow: comboGlow }}
-        />
-      )}
 
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         {PARTICLES.map(p => (

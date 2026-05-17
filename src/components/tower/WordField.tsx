@@ -84,7 +84,6 @@ export default memo(function WordField({
       <BattleLine
         creatures={creatures}
         animState={battleAnim}
-        combo={combo}
       />
     </div>
   );

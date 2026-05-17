@@ -126,11 +126,11 @@ export default function TowerGame({ activeCreatures, onPlayAgain }: TowerGamePro
           setHitEffectTrigger(h => h + 1);
 
           wordCountRef.current++;
-          if (wordCountRef.current % 6 === 0) {
+          if (wordCountRef.current % 10 === 0) {
             setDialogueContext('normal');
             setDialogueTrigger(t => t + 1);
           }
-          if (event.combo === 5) {
+          if (event.combo === 7) {
             setDialogueContext('combo');
             setDialogueTrigger(t => t + 1);
           }

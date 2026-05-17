@@ -18,9 +18,9 @@ export default memo(function ChinesePrompt({ chinese, letterCount, feedback, cor
     return () => clearTimeout(t);
   }, [trigger]);
 
-  const glowColor = feedback === 'correct' ? 'drop-shadow-[0_0_12px_rgba(74,222,128,0.6)]'
-    : feedback === 'wrong' ? 'drop-shadow-[0_0_12px_rgba(248,113,113,0.6)]'
-    : feedback === 'boss_defeated' ? 'drop-shadow-[0_0_12px_rgba(245,197,24,0.6)]'
+  const glowColor = feedback === 'correct' ? 'drop-shadow-[0_0_8px_rgba(74,222,128,0.4)]'
+    : feedback === 'wrong' ? 'drop-shadow-[0_0_8px_rgba(248,113,113,0.4)]'
+    : feedback === 'boss_defeated' ? 'drop-shadow-[0_0_8px_rgba(245,197,24,0.4)]'
     : '';
 
   return (

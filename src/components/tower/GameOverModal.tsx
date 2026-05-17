@@ -37,20 +37,16 @@ export default function GameOverModal({
   const isNewBest = height > 0 && height >= bestHeight;
 
   const shareUrl = useMemo(() => {
-    const base = 'https://word-tower.pages.dev';
-    const name = playerName || '单词法师';
-    const emoji = playerEmoji || '🧙';
     const params = new URLSearchParams();
     params.set('h', String(height));
     params.set('e', String(energy));
     params.set('c', String(maxCombo));
     params.set('w', String(wordsCompleted));
-    params.set('n', name);
-    params.set('em', emoji);
-    return `${base}?${params.toString()}`;
+    params.set('n', playerName || '单词法师');
+    params.set('em', playerEmoji || '🧙');
+    return `https://word-tower.pages.dev?${params.toString()}`;
   }, [height, energy, maxCombo, wordsCompleted, playerName, playerEmoji]);
 
-  // Update browser URL so WeChat "..." menu shares the link with score
   useEffect(() => {
     history.replaceState(null, '', shareUrl);
   }, [shareUrl]);
@@ -59,7 +55,7 @@ export default function GameOverModal({
     return Object.entries(wordStats)
       .filter(([, s]) => s.mastery < 4)
       .sort((a, b) => b[1].wrong - a[1].wrong || a[1].mastery - b[1].mastery)
-      .slice(0, 5)
+      .slice(0, 3)
       .map(([word, s]) => {
         const entry = wordBank.find(w => w.en === word);
         return { word, zh: entry?.zh ?? '', wrong: s.wrong, mastery: s.mastery };
@@ -67,7 +63,6 @@ export default function GameOverModal({
   }, [wordStats]);
 
   const handleShare = useCallback(async () => {
-    // Try Web Share API first (1 tap in Safari/Chrome)
     try {
       await navigator.share({
         title: `${playerEmoji} ${playerName} 的单词爬塔战绩`,
@@ -75,11 +70,8 @@ export default function GameOverModal({
         url: shareUrl,
       });
       return;
-    } catch {
-      // User cancelled or not supported - copy link instead
-    }
+    } catch { /* fall through */ }
 
-    // Fallback: copy link
     try {
       await navigator.clipboard.writeText(shareUrl);
       showToast('🔗 链接已复制，点右上角 ··· 发送给朋友');
@@ -98,80 +90,66 @@ export default function GameOverModal({
 
   return (
     <Modal open onClose={onPlayAgain} title="爬塔结束！">
-      <div className="space-y-4">
-        {/* Player identity */}
-        <div className="flex items-center justify-center gap-2">
-          <span className="text-2xl">{playerEmoji || '🧙'}</span>
-          <span className="text-white font-bold">{playerName || '单词法师'}</span>
+      <div className="space-y-3">
+        {/* Player + best badge */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">{playerEmoji || '🧙'}</span>
+            <span className="text-white font-bold text-sm">{playerName || '单词法师'}</span>
+          </div>
+          {isNewBest && (
+            <span className="text-xs text-yellow-400 animate-pulse">🏆 新纪录！</span>
+          )}
         </div>
 
         {/* Last word */}
         {lastChinese && (
-          <div className="text-center py-2 bg-bg rounded-xl">
-            <div className="text-xs text-gray-500">最后一词</div>
-            <div className="text-xl font-bold text-white">{lastChinese}</div>
-            <div className="text-sm text-gray-400">{lastWord}</div>
+          <div className="text-center py-1.5 bg-bg rounded-lg">
+            <span className="text-xs text-gray-500 mr-1">最后一词</span>
+            <span className="text-sm font-bold text-white">{lastChinese}</span>
+            <span className="text-xs text-gray-400 ml-1">{lastWord}</span>
           </div>
         )}
 
-        {/* Stats card */}
-        <div className="bg-gradient-to-b from-[#1a1040] to-[#0f0f23] rounded-2xl p-5 text-center relative overflow-hidden border border-purple-800/40">
-          <div className="absolute top-0 left-0 w-12 h-12 border-t-2 border-l-2 border-accent/30 rounded-tl-2xl" />
-          <div className="absolute top-0 right-0 w-12 h-12 border-t-2 border-r-2 border-accent/30 rounded-tr-2xl" />
-          <div className="absolute bottom-0 left-0 w-12 h-12 border-b-2 border-l-2 border-accent/30 rounded-bl-2xl" />
-          <div className="absolute bottom-0 right-0 w-12 h-12 border-b-2 border-r-2 border-accent/30 rounded-br-2xl" />
-
-          {isNewBest && (
-            <div className="text-xs text-yellow-400 mb-2 animate-pulse">🏆 新纪录！</div>
-          )}
-          <div className="text-5xl font-bold text-accent drop-shadow-[0_0_12px_rgba(255,107,107,0.4)]">{height}</div>
-          <div className="text-sm text-gray-400 mt-1">层</div>
-
-          <div className="grid grid-cols-2 gap-3 mt-4">
-            <div className="bg-bg/60 rounded-xl p-3 text-center">
-              <div className="text-lg font-bold text-energy">{energy}</div>
-              <div className="text-xs text-gray-500">能量石</div>
-            </div>
-            <div className="bg-bg/60 rounded-xl p-3 text-center">
-              <div className="text-lg font-bold text-primary">{wordsCompleted}</div>
-              <div className="text-xs text-gray-500">拼对词数</div>
-            </div>
-            <div className="bg-bg/60 rounded-xl p-3 text-center">
-              <div className="text-lg font-bold text-yellow-400">x{maxCombo}</div>
-              <div className="text-xs text-gray-500">最大连击</div>
-            </div>
-            <div className="bg-bg/60 rounded-xl p-3 text-center">
-              <div className="text-lg font-bold text-gray-300">{minutes}:{String(secs).padStart(2, '0')}</div>
-              <div className="text-xs text-gray-500">持续时间</div>
-            </div>
+        {/* Compact stats */}
+        <div className="grid grid-cols-4 gap-2">
+          <div className="bg-bg rounded-lg p-2 text-center">
+            <div className="text-lg font-bold text-accent">{height}</div>
+            <div className="text-[10px] text-gray-500">层</div>
+          </div>
+          <div className="bg-bg rounded-lg p-2 text-center">
+            <div className="text-base font-bold text-energy">{energy}</div>
+            <div className="text-[10px] text-gray-500">能量</div>
+          </div>
+          <div className="bg-bg rounded-lg p-2 text-center">
+            <div className="text-base font-bold text-yellow-400">x{maxCombo}</div>
+            <div className="text-[10px] text-gray-500">连击</div>
+          </div>
+          <div className="bg-bg rounded-lg p-2 text-center">
+            <div className="text-base font-bold text-gray-300">{minutes}:{String(secs).padStart(2, '0')}</div>
+            <div className="text-[10px] text-gray-500">用时</div>
           </div>
         </div>
 
-        {/* Weak words */}
+        {/* Weak words — only if any, max 3 */}
         {weakWords.length > 0 && (
-          <div className="bg-bg rounded-xl p-3">
-            <div className="text-xs text-gray-500 mb-2">📝 需要加强的单词</div>
-            <div className="space-y-1">
+          <div className="bg-bg rounded-lg p-2">
+            <div className="text-[10px] text-gray-500 mb-1">📝 需要加强</div>
+            <div className="flex flex-wrap gap-x-4 gap-y-0.5">
               {weakWords.map(w => (
-                <div key={w.word} className="flex items-center justify-between text-xs">
-                  <span>
-                    <span className="text-white font-bold">{w.word}</span>
-                    <span className="text-gray-500 ml-1">{w.zh}</span>
-                  </span>
-                  <span className="text-gray-600">
-                    错{w.wrong}次
-                    <span className={`ml-1 ${w.mastery <= 1 ? 'text-red-400' : w.mastery <= 2 ? 'text-yellow-400' : 'text-green-400'}`}>
-                      {'⬤'.repeat(Math.max(1, w.mastery))}{'〇'.repeat(5 - Math.max(1, w.mastery))}
-                    </span>
-                  </span>
-                </div>
+                <span key={w.word} className="text-xs">
+                  <span className="text-white font-medium">{w.word}</span>
+                  <span className="text-gray-500 ml-1">{w.zh}</span>
+                  <span className="text-gray-600 ml-1">错{w.wrong}</span>
+                </span>
               ))}
             </div>
           </div>
         )}
 
-        <div className="flex gap-3">
-          <Button variant="primary" size="lg" onClick={handleShare} className="flex-[2]">
+        {/* Buttons — always at bottom */}
+        <div className="flex gap-2 pt-1">
+          <Button variant="primary" size="lg" onClick={handleShare} className="flex-1">
             📤 分享给好友
           </Button>
           <Button variant="secondary" size="lg" onClick={onPlayAgain} className="flex-1">

@@ -2,6 +2,7 @@ import { useMemo, useEffect, useCallback } from 'react';
 import { useGameStore } from '../../store/useGameStore';
 import { showToast } from '../ui/Toast';
 import { wordBank } from '../../data/wordBank';
+import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 
 interface GameOverModalProps {
@@ -71,10 +72,19 @@ export default function GameOverModal({
     }
   }, [shareUrl, playerEmoji, playerName, height]);
 
-  // wrapped in a function so Modal can render it with its own scroll + footer
+  const footer = (
+    <div className="flex gap-2">
+      <Button variant="primary" size="lg" onClick={handleShare} className="flex-1">
+        📤 分享给好友
+      </Button>
+      <Button variant="secondary" size="lg" onClick={onPlayAgain} className="flex-1">
+        再来一局
+      </Button>
+    </div>
+  );
+
   return (
-    <div className="flex flex-col" style={{ minHeight: 0 }}>
-      {/* Content area: always fits, no scroll needed */}
+    <Modal open onClose={onPlayAgain} title="爬塔结束！" footer={footer}>
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -85,7 +95,7 @@ export default function GameOverModal({
         </div>
 
         {lastChinese && (
-          <div className="text-center py-1.5 bg-bg rounded-lg text-xs">
+          <div className="text-center py-2 bg-bg rounded-lg text-sm">
             <span className="text-gray-500">最后一词 </span>
             <span className="text-white font-bold">{lastChinese}</span>
             <span className="text-gray-400 ml-1">{lastWord}</span>
@@ -94,13 +104,13 @@ export default function GameOverModal({
 
         <div className="grid grid-cols-4 gap-2">
           {[
-            [String(height), '层', 'text-accent'],
+            [String(height), '层', 'text-accent text-lg'],
             [String(energy), '能量', 'text-energy'],
             [`x${maxCombo}`, '连击', 'text-yellow-400'],
             [`${minutes}:${String(secs).padStart(2, '0')}`, '用时', 'text-gray-300'],
           ].map(([v, l, c]) => (
             <div key={l} className="bg-bg rounded-lg p-2 text-center">
-              <div className={`text-base font-bold ${c}`}>{v}</div>
+              <div className={`font-bold ${c}`}>{v}</div>
               <div className="text-[10px] text-gray-500">{l}</div>
             </div>
           ))}
@@ -118,16 +128,6 @@ export default function GameOverModal({
           </div>
         )}
       </div>
-
-      {/* Buttons footer — sticky so always visible even if content scrolls */}
-      <div className="sticky bottom-0 bg-surface flex gap-2 pt-3 mt-1 border-t border-gray-800">
-        <Button variant="primary" size="lg" onClick={handleShare} className="flex-1">
-          📤 分享给好友
-        </Button>
-        <Button variant="secondary" size="lg" onClick={onPlayAgain} className="flex-1">
-          再来一局
-        </Button>
-      </div>
-    </div>
+    </Modal>
   );
 }

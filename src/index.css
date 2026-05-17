@@ -2,15 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
-/* WeChat compatibility resets */
-* {
-  -webkit-tap-highlight-color: transparent;
-  -webkit-touch-callout: none;
-}
-
 html {
   overscroll-behavior: none;
-  -webkit-overflow-scrolling: touch;
   background-color: #1a1a2e;
   height: 100%;
 }
@@ -21,7 +14,6 @@ body {
   min-height: 100dvh;
   background-color: #1a1a2e;
   color: #e0e0e0;
-  touch-action: manipulation;
   overscroll-behavior: none;
 }
 
@@ -29,6 +21,12 @@ body {
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
+}
+
+/* Only apply touch-action to game area, not globally */
+.game-area {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* Safe area padding for notched phones */

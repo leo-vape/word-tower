@@ -6,17 +6,16 @@ import { usePWAStatus } from '../../hooks/usePWAStatus';
 
 interface AppShellProps {
   children: ReactNode;
-  onShare: () => void;
 }
 
-export default function AppShell({ children, onShare }: AppShellProps) {
+export default function AppShell({ children }: AppShellProps) {
   const { isOffline } = usePWAStatus();
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-bg overflow-hidden">
+    <div className="fixed inset-0 flex flex-col bg-bg">
       <OfflineBanner isOffline={isOffline} />
-      <TopBar onShare={onShare} />
-      <main className="flex-1 overflow-hidden flex flex-col">{children}</main>
+      <TopBar />
+      <main className="flex-1 flex flex-col min-h-0">{children}</main>
       <BottomNav />
     </div>
   );

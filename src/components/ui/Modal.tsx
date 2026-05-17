@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useRef } from 'react';
+import { type ReactNode, useEffect } from 'react';
 
 interface ModalProps {
   open: boolean;
@@ -8,19 +8,16 @@ interface ModalProps {
 }
 
 export default function Modal({ open, onClose, children, title }: ModalProps) {
-  const scrollY = useRef(0);
-
   useEffect(() => {
     if (open) {
-      scrollY.current = window.scrollY;
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollY.current}px`;
-      document.body.style.width = '100%';
+      // Prevent background page from scrolling while modal is open
+      const scrollY = window.scrollY;
+      document.documentElement.style.overflow = 'hidden';
+      document.body.style.overflow = 'hidden';
       return () => {
-        document.body.style.position = '';
-        document.body.style.top = '';
-        document.body.style.width = '';
-        window.scrollTo(0, scrollY.current);
+        document.documentElement.style.overflow = '';
+        document.body.style.overflow = '';
+        window.scrollTo(0, scrollY);
       };
     }
   }, [open]);
@@ -29,13 +26,17 @@ export default function Modal({ open, onClose, children, title }: ModalProps) {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center">
+      {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/60 animate-fade-in"
         onClick={onClose}
       />
-      <div className="relative bg-surface rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md max-h-[85vh] flex flex-col animate-slide-up shadow-xl">
+
+      {/* Modal panel */}
+      <div className="relative bg-surface rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md max-h-[80vh] flex flex-col animate-slide-up shadow-xl z-10">
+        {/* Header */}
         {title && (
-          <div className="flex items-center justify-between bg-surface border-b border-gray-800 px-5 py-4 rounded-t-2xl shrink-0">
+          <div className="shrink-0 flex items-center justify-between bg-surface border-b border-gray-800 px-5 py-4 rounded-t-2xl">
             <h3 className="text-lg font-bold text-white">{title}</h3>
             <button
               onClick={onClose}
@@ -46,7 +47,12 @@ export default function Modal({ open, onClose, children, title }: ModalProps) {
             </button>
           </div>
         )}
-        <div className="overflow-y-auto p-5 min-h-0" style={{ WebkitOverflowScrolling: 'touch' }}>
+
+        {/* Scrollable body */}
+        <div
+          className="flex-1 overflow-y-auto overscroll-contain p-5"
+          style={{ WebkitOverflowScrolling: 'touch' }}
+        >
           {children}
         </div>
       </div>

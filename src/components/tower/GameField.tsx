@@ -23,7 +23,7 @@ const PARTICLES = Array.from({ length: 5 }).map((_, i) => ({
 export default memo(function GameField({ children, combo, shake, scorePopups }: GameFieldProps) {
   return (
     <div
-      className={`relative flex-1 min-h-[200px] bg-gradient-to-b from-[#0f0f23] via-[#1a1030] to-[#0f0f23] overflow-hidden transition-all duration-300
+      className={`game-area relative flex-1 min-h-[200px] bg-gradient-to-b from-[#0f0f23] via-[#1a1030] to-[#0f0f23] overflow-hidden transition-all duration-300
         ${shake ? 'animate-shake' : ''}
       `}
     >

@@ -1,4 +1,4 @@
-import { useMemo, useEffect } from 'react';
+import { useMemo, useEffect, useCallback } from 'react';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import { useGameStore } from '../../store/useGameStore';
@@ -36,7 +36,6 @@ export default function GameOverModal({
 
   const isNewBest = height > 0 && height >= bestHeight;
 
-  // Build share URL with score encoded in query params
   const shareUrl = useMemo(() => {
     const base = 'https://word-tower.pages.dev';
     const name = playerName || '单词法师';
@@ -67,19 +66,23 @@ export default function GameOverModal({
       });
   }, [wordStats]);
 
-  const shareText = `${playerEmoji} ${playerName || '单词法师'} 向你发起挑战！
-🗼 爬到了 ${height} 层
-⚡ 能量石 +${energy}
-🔥 最大连击 x${maxCombo}
-⏱ ${minutes}:${String(secs).padStart(2, '0')}
+  const handleShare = useCallback(async () => {
+    // Try Web Share API first (1 tap in Safari/Chrome)
+    try {
+      await navigator.share({
+        title: `${playerEmoji} ${playerName} 的单词爬塔战绩`,
+        text: `🗼 爬到了 ${height} 层！来挑战我吧！`,
+        url: shareUrl,
+      });
+      return;
+    } catch {
+      // User cancelled or not supported - copy link instead
+    }
 
-来试试你能不能超过我吧！
-${shareUrl}`;
-
-  const handleCopyLink = async () => {
+    // Fallback: copy link
     try {
       await navigator.clipboard.writeText(shareUrl);
-      showToast('🔗 链接已复制，去微信粘贴给好友吧！');
+      showToast('🔗 链接已复制，点右上角 ··· 发送给朋友');
     } catch {
       const textarea = document.createElement('textarea');
       textarea.value = shareUrl;
@@ -89,26 +92,9 @@ ${shareUrl}`;
       textarea.select();
       document.execCommand('copy');
       document.body.removeChild(textarea);
-      showToast('🔗 链接已复制，去微信粘贴给好友吧！');
+      showToast('🔗 链接已复制，点右上角 ··· 发送给朋友');
     }
-  };
-
-  const handleCopyCard = async () => {
-    try {
-      await navigator.clipboard.writeText(shareText);
-      showToast('📋 挑战书已复制，去粘贴吧！');
-    } catch {
-      const textarea = document.createElement('textarea');
-      textarea.value = shareText;
-      textarea.style.cssText = 'position:fixed;left:-9999px;top:-9999px';
-      document.body.appendChild(textarea);
-      textarea.focus();
-      textarea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textarea);
-      showToast('📋 挑战书已复制，去粘贴吧！');
-    }
-  };
+  }, [shareUrl, playerEmoji, playerName, height]);
 
   return (
     <Modal open onClose={onPlayAgain} title="爬塔结束！">
@@ -127,15 +113,6 @@ ${shareUrl}`;
             <div className="text-sm text-gray-400">{lastWord}</div>
           </div>
         )}
-
-        {/* WeChat share guide */}
-        <div className="bg-energy/10 border border-energy/30 rounded-xl p-4 text-center">
-          <div className="text-lg mb-2">📤 分享战绩给好友</div>
-          <div className="text-sm text-gray-300 leading-relaxed">
-            点击右上角 <span className="text-white font-bold text-lg">···</span> → <span className="text-white font-bold">发送给朋友</span>
-          </div>
-          <div className="text-xs text-gray-500 mt-1">好友会看到你的战绩，点开就能挑战你！</div>
-        </div>
 
         {/* Stats card */}
         <div className="bg-gradient-to-b from-[#1a1040] to-[#0f0f23] rounded-2xl p-5 text-center relative overflow-hidden border border-purple-800/40">
@@ -194,13 +171,10 @@ ${shareUrl}`;
         )}
 
         <div className="flex gap-3">
-          <Button variant="secondary" size="lg" onClick={handleCopyLink} className="flex-1">
-            🔗 复制链接
+          <Button variant="primary" size="lg" onClick={handleShare} className="flex-[2]">
+            📤 分享给好友
           </Button>
-          <Button variant="secondary" size="lg" onClick={handleCopyCard} className="flex-1">
-            📋 复制挑战书
-          </Button>
-          <Button variant="primary" size="lg" onClick={onPlayAgain} className="flex-1">
+          <Button variant="secondary" size="lg" onClick={onPlayAgain} className="flex-1">
             再来一局
           </Button>
         </div>
